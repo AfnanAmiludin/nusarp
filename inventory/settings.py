@@ -1,8 +1,13 @@
 
-from django.conf import settings
+import logging
+import sys
+from pathlib import Path
 
-# Tambahkan konfigurasi aplikasi di sini
-INSTALLED_APPS = [
-    # Aplikasi lain
-    'inventory',
-]
+from django.conf import settings as djangosettings
+from inventory.apps import ApplicationConfig
+
+DEFAULTS = dict(
+    SCHEMA=ApplicationConfig.name,
+)
+
+SCHEMA = DEFAULTS["SCHEMA"]

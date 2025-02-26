@@ -129,6 +129,16 @@ python manage.py runserver
 ```
 
 Aplikasi akan berjalan di `http://127.0.0.1:8000`.
+
+### **7. Membuat Superuser (Opsional)**
+Untuk mengakses admin panel Django, Anda perlu membuat superuser:
+
+```bash
+python manage.py createsuperuser
+```
+
+Masukkan nama pengguna, email, dan kata sandi untuk superuser.
+
 ---
 
 ## Fitur Aplikasi
@@ -138,6 +148,52 @@ Aplikasi akan berjalan di `http://127.0.0.1:8000`.
 3. **Sumber Daya Manusia**: Pengelolaan karyawan, gaji, dan absensi.
 4. **Penyimpanan dan Akses Data**: Menggunakan Redis untuk caching data dan mempercepat akses.
 5. **Laporan**: Membuat laporan keuangan dan statistik lainnya.
+
+---
+
+## List Command
+
+Aplikasi ini menyediakan beberapa **custom management commands** untuk mempermudah pengelolaan aplikasi. Berikut adalah daftar command yang dapat digunakan:
+
+### **1. `createapp`**
+Command ini digunakan untuk membuat aplikasi baru dengan struktur folder dan file yang telah ditentukan, di luar folder `core`.
+
+#### **Cara Menggunakan:**
+```bash
+python manage.py createapp nama_app
+```
+
+Ini akan membuat aplikasi baru dengan folder berikut:
+- `apis`
+- `serializers`
+- `views`
+- `tests`
+- `constants`
+- `fields`
+- `fixtures`
+- `forms`
+- `management/commands`
+- `middleware`
+- `migrations`
+- `models`
+- `templates`
+- `static`
+- `static/css`
+- `static/js`
+- `static/img`
+- `views`
+- `tests`
+- `utils`
+
+### **2. `runredis`**
+Command ini digunakan untuk menjalankan Redis server pada sistem Windows. Pastikan Redis telah terinstal dan path Redis sudah benar.
+
+#### **Cara Menggunakan:**
+```bash
+python manage.py runredis
+```
+
+Ini akan menjalankan Redis server yang ada di folder `bin/redis/latest/`.
 
 ---
 

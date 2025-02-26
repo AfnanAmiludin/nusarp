@@ -44,7 +44,7 @@ class Command(BaseCommand):
             os.makedirs(folder_path, exist_ok=True)
             self.stdout.write(self.style.SUCCESS(f"Folder created: {folder_path}"))
 
-        # Buat file `__init__.py` di dalam folder `models`, `serializers`, dll
+        # Membuat file `__init__.py` di dalam folder `models`, `serializers`, dll
         init_files = [
             'apis/__init__.py',
             'apis/serializers/__init__.py',
@@ -74,33 +74,25 @@ class Command(BaseCommand):
         with open(os.path.join(app_path, 'apps.py'), 'w') as f:
             f.write(f"""
 from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
-class {app_name.capitalize()}Config(AppConfig):
+class ApplicationConfig(AppConfig):
     name = '{app_name}'
+    verbose_name = _('Application')
+
+    def ready(self):
+        import {app_name}.signals
 """)
         self.stdout.write(self.style.SUCCESS(f"File 'apps.py' created in {app_path}"))
 
         # Membuat file `admin.py` untuk aplikasi baru
         with open(os.path.join(app_path, 'admin.py'), 'w') as f:
-            f.write(f"""
-""")
+            f.write(f"""# Register your models here\n""")
         self.stdout.write(self.style.SUCCESS(f"File 'admin.py' created in {app_path}"))
 
         # Membuat file `.gitignore` untuk aplikasi baru
         with open(os.path.join(app_path, '.gitignore'), 'w') as f:
-            f.write("""
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-*.db
-*.sqlite3
-*.log
-.DS_Store
-env/
-venv/
-static/
-""")
+            f.write("""\n__pycache__\n*.pyc\n*.pyo\n*.pyd\n*.db\n*.sqlite3\n*.log\n.DS_Store\nenv/\nvenv/\nstatic/\n""")
         self.stdout.write(self.style.SUCCESS(f"File '.gitignore' created in {app_path}"))
 
         # Membuat file `urls.py` untuk aplikasi baru
@@ -109,16 +101,37 @@ static/
             f.write("urlpatterns = [\n    # Tambahkan URL di sini\n]\n")
         self.stdout.write(self.style.SUCCESS(f"File 'urls.py' created in {app_path}"))
 
+        # Membuat file `signals.py` untuk aplikasi baru
+        with open(os.path.join(app_path, 'signals.py'), 'w') as f:
+            f.write(f"""
+from django.db import connection
+from django.db.models.signals import pre_migrate
+from django.dispatch import receiver
+from django.conf import settings
+
+@receiver(pre_migrate)
+def create_schema(sender, **kwargs):
+    schema_name = getattr(settings, "SCHEMA", "{app_name}")
+    with connection.cursor() as cursor:
+        cursor.execute(f'CREATE SCHEMA IF NOT EXISTS "{{schema_name}}";')
+""")
+        self.stdout.write(self.style.SUCCESS(f"File 'signals.py' created in {app_path}"))
+
         # Membuat file `settings.py` untuk aplikasi baru
         with open(os.path.join(app_path, 'settings.py'), 'w') as f:
             f.write(f"""
-from django.conf import settings
+import logging
+import sys
+from pathlib import Path
 
-# Tambahkan konfigurasi aplikasi di sini
-INSTALLED_APPS = [
-    # Aplikasi lain
-    '{app_name}',
-]
+from django.conf import settings as djangosettings
+from {app_name}.apps import ApplicationConfig
+
+DEFAULTS = dict(
+    SCHEMA=ApplicationConfig.name,
+)
+
+SCHEMA = DEFAULTS["SCHEMA"]
 """)
         self.stdout.write(self.style.SUCCESS(f"File 'settings.py' created in {app_path}"))
 
@@ -164,4 +177,3 @@ INSTALLED_APPS = [
                 self.stdout.write(self.style.SUCCESS(f"URL for '{app_name}' already exists in 'setup/urls.py'"))
         else:
             self.stdout.write(self.style.ERROR(f"File 'urls.py' not found in 'setup' directory"))
-
