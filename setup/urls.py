@@ -2,6 +2,8 @@
 URL configuration for nusarp project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
+from warehouse.urls import urlpatterns as warehouse_urls
+urlpatterns += warehouse_urls
 from inventory.urls import urlpatterns as inventory_urls
 urlpatterns += inventory_urls
     https://docs.djangoproject.com/en/5.0/topics/http/urls/

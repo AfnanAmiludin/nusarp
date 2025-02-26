@@ -1,0 +1,6 @@
+[submodule "bin/redis/latest"]
+	path = bin/redis/latest
+	url = https://github.com/IT-CORNER-ERP/rediswindows.git
+[submodule "bin/redis/json"]
+	path = bin/redis/json
+	url = https://github.com/IT-CORNER-ERP/redisjson.git

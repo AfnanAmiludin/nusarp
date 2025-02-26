@@ -12,7 +12,7 @@ def check_redis():
         sys.exit(1)
 
 def main():
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nusarp.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'setup.settings')
     check_redis()
     try:
         from django.core.management import execute_from_command_line
