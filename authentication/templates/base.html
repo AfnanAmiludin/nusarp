@@ -1,0 +1,91 @@
+{% load tailwind_cli %}
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    {% tailwind_css %}
+    <script
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+      defer
+    ></script>
+  </head>
+  <body class="bg-gray-100" x-data="{ sidebarOpen: true }">
+    <div class="flex">
+      <!-- Sidebar -->
+      <aside
+        class="bg-blue-900 text-white h-screen fixed top-0 left-0 transition-all duration-300 ease-in-out"
+        :class="sidebarOpen ? 'w-64' : 'w-16'"
+      >
+        <nav class="p-5 flex flex-col space-y-4">
+          <div class="flex flex-row items-center justify-between">
+            <header class="text-2xl" x-show="sidebarOpen" x-transition.opacity>
+              DjangoTail
+            </header>
+            <button
+              @click="sidebarOpen = !sidebarOpen"
+              class="text-white text-2xl focus:outline-none transition-transform transform hover:scale-100"
+            >
+              ☰
+            </button>
+          </div>
+          <ul class="mt-6">
+            <li>
+              <a
+                href="#"
+                class="flex items-center p-2 rounded transition hover:bg-blue-700"
+              >
+                <span>🏠</span>
+                <span class="ml-2" x-show="sidebarOpen" x-transition.opacity
+                  >Home</span
+                >
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="flex items-center p-2 rounded transition hover:bg-blue-700"
+              >
+                <span>📊</span>
+                <span class="ml-2" x-show="sidebarOpen" x-transition.opacity
+                  >Reports</span
+                >
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="flex items-center p-2 rounded transition hover:bg-blue-700"
+              >
+                <span>⚙️</span>
+                <span class="ml-2" x-show="sidebarOpen" x-transition.opacity
+                  >Settings</span
+                >
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main
+        class="flex-1 min-h-screen transition-all duration-300 ease-in-out ml-16"
+        :class="sidebarOpen ? 'ml-64' : 'ml-16'"
+      >
+        <!-- Header -->
+        <header
+          class="bg-white p-4 shadow flex justify-between items-center w-full"
+        >
+          <h1 class="text-xl font-semibold">Dashboard</h1>
+          <div>
+            <span class="text-gray-700">👤 Admin</span>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-6">{% block content %}{% endblock %}</div>
+      </main>
+    </div>
+  </body>
+</html>

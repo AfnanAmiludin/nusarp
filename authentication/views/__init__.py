@@ -1,1 +1,4 @@
-__all__ = []
+from authentication.views.test import TestView
+__all__ = [
+    'TestView',
+]
