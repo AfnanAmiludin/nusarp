@@ -1,0 +1,36 @@
+# .editorconfig file
+
+# root = true menandakan bahwa ini adalah file editorconfig utama
+root = true
+
+# Python settings
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 79
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# JavaScript / React settings
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 2
+max_line_length = 80
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# HTML settings
+[*.html]
+indent_style = space
+indent_size = 2
+max_line_length = 80
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# CSS / SCSS settings
+[*.{css,scss}]
+indent_style = space
+indent_size = 2
+max_line_length = 80
+trim_trailing_whitespace = true
+insert_final_newline = true
