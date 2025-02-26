@@ -125,7 +125,7 @@ redis-server
 Setelah semua dependensi terinstal dan Redis berjalan, jalankan server Django dengan perintah:
 
 ```bash
-python manage.py runserver
+python manage.py tailwind runserver
 ```
 
 Aplikasi akan berjalan di `http://127.0.0.1:8000`.
