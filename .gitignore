@@ -7,12 +7,6 @@ media/
 data/
 env/
 .env
-erpro.sqlite
-bin/nginx/conf/erpro.conf
-bin/nginx/logs/
-bin/nginx/nginx.pid
-bin/rabbitmq/base/log/
-bin/rabbitmq/base/mnesia/
 *.private.py
 *.pyc
 *.egg
