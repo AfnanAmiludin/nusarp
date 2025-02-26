@@ -9,4 +9,5 @@ from authentication.apps import ApplicationConfig
 DEFAULTS = dict(
     SCHEMA=ApplicationConfig.name,
 )
-__all__ = list(DEFAULTS)
+
+SCHEMA = DEFAULTS["SCHEMA"]

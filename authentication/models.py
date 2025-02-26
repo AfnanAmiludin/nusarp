@@ -1,31 +1,31 @@
 from django.db import models
 from authentication import settings
+from django.utils.translation import gettext_lazy as _
+from datetime import datetime
 
 # Create your models here.
-class User(Base, AbstractBaseUser, PermissionsMixin, ):
-    username_validator = UnicodeUsernameValidator()
-    user_id = IdentifierField(
+class User(models.Model):
+    user_id = models.AutoField(
         primary_key=True,
-        company=None,
-        prefix='USR',
         verbose_name=_('user id'),
         help_text=_('Used for identity for signin'),
     )
     user_name = models.CharField(
+        max_length=150,
         unique=True,
         verbose_name=_('user name'),
         help_text=_(
             'Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. '
-            'this column alternative identity'
+            'This column is an alternative identity.'
         ),
-        validators=[username_validator],
         error_messages={
             'unique': _('A user with that username already exists.'),
         },
     )
     real_name = models.CharField(
+        max_length=255,
         verbose_name=_('real name'),
-        help_text=_('Used for view'),
+        help_text=_('Used for display purposes'),
     )
     email = models.EmailField(
         unique=True,
@@ -34,39 +34,30 @@ class User(Base, AbstractBaseUser, PermissionsMixin, ):
         help_text=_('Used for email and alternative identity'),
     )
     phone = models.CharField(
+        max_length=15,
         unique=True,
         blank=True,
         null=True,
         verbose_name=_('phone'),
         help_text=_('Used for phone and alternative identity'),
     )
-    password = EncryptedCharField(
+    password = models.CharField(
+        max_length=255,
         verbose_name=_('password'),
-        help_text=_('Used for store password'),
+        help_text=_('Used to store password'),
     )
     avatar = models.CharField(
+        max_length=255,
         blank=True,
         null=True,
         verbose_name=_('avatar'),
-        help_text=_('Used for picture'),
-    )
-    locale = models.CharField(
-        default='' if not djangosettings.LANGUAGE_CODE else djangosettings.LANGUAGE_CODE,
-        choices=djangosettings.LANGUAGES,
-        blank=True,
-        null=True,
-        verbose_name=_('locale'),
-        help_text=_('Used for default language'),
-    )
-    timezone = TimeZoneField(
-        verbose_name=_('timezone'),
-        help_text=_('Used for default timezone'),
+        help_text=_('Used for profile picture'),
     )
     actived_date = models.DateTimeField(
         blank=True,
         null=True,
-        verbose_name=_('actived date'),
-        help_text=_('Used for tracking actived date'),
+        verbose_name=_('activated date'),
+        help_text=_('Used for tracking activation date'),
     )
     is_staff = models.BooleanField(
         default=False,
