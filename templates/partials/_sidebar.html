@@ -29,7 +29,12 @@
                     {% for menu in category.menus.all %}
                         {% if not menu.parent %}
                             <li class="slide {% if menu.submenus.all %} has-sub {% endif %}">
-                                <a href="{{ menu.url|default:'#' }}" class="side-menu__item">
+                                {% if menu.submenus.all %}
+                                <a href="javascript:void(0);" class="side-menu__item">
+                                {% else %}
+                                <a href="javascript:void(0);" class="side-menu__item" 
+                                   onclick="openInTab('{{ menu.url|default:'#' }}', '{{ menu.title }}', '{{ menu.icon }}')">
+                                {% endif %}
                                     <i class="{{ menu.icon }} side-menu__icon"></i>
                                     <span class="side-menu__label">{{ menu.title }}</span>
                                     {% if menu.submenus.all %}

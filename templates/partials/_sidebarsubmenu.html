@@ -1,6 +1,6 @@
 {% if submenu.submenus.all %}
     <li class="slide has-sub">
-        <a href="{{ submenu.url|default:'#' }}" class="side-menu__item">
+        <a href="javascript:void(0);" class="side-menu__item">
             <i class="{{ submenu.icon }} side-menu__icon"></i>
             <span class="side-menu__label">{{ submenu.title }}</span>
             <i class="ri ri-arrow-right-s-line side-menu__angle"></i>
@@ -11,7 +11,8 @@
                     {% include 'partials/_sidebarsubmenu.html' with submenu=sub_submenu %}
                 {% else %}
                     <li class="slide">
-                        <a href="{{ sub_submenu.url|default:'#' }}" class="side-menu__item">
+                        <a href="javascript:void(0);" class="side-menu__item" 
+                           onclick="openInTab('{{ sub_submenu.url|default:'#' }}', '{{ sub_submenu.title }}', '{{ sub_submenu.icon }}')">
                             <i class="{{ sub_submenu.icon }} side-menu__icon"></i>
                             <span class="side-menu__label">{{ sub_submenu.title }}</span>
                         </a>
@@ -22,7 +23,8 @@
     </li>
 {% else %}
     <li class="slide">
-        <a href="{{ submenu.url|default:'#' }}" class="side-menu__item">
+        <a href="javascript:void(0);" class="side-menu__item" 
+           onclick="openInTab('{{ submenu.url|default:'#' }}', '{{ submenu.title }}', '{{ submenu.icon }}')">
             <i class="{{ submenu.icon }} side-menu__icon"></i>
             <span class="side-menu__label">{{ submenu.title }}</span>
         </a>
