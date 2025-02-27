@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     "django_tailwind_cli",
     "compressor",
     "clearcache",
-    "django_browser_reload",
+    # "django_browser_reload",
 ]
 
 # Path ke folder aplikasi di dalam root project (misal core, inventory, dll.)
@@ -63,7 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
+    # "django_browser_reload.middleware.BrowserReloadMiddleware",
     "authentication.middleware.LoginRequiredMiddleware"
 ]
 
