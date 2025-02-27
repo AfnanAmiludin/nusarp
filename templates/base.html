@@ -1,7 +1,5 @@
 {% load compress %}
-{% load tailwind_cli %}
 {% load static %}
-{% load i18n %}
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr" data-nav-layout="vertical" class="light" data-header-styles="light" data-menu-styles="dark">
@@ -46,6 +44,66 @@
 
 <body>
 
+  <style>
+    /* Tambahkan ke file CSS Anda atau buat file baru */
+
+    /* Style untuk container tab */
+    .tabs-navigation {
+      height: 40px;
+      border-bottom: 1px solid #e2e8f0;
+      background-color: #f8fafc;
+    }
+
+    /* Style untuk tab items */
+    .tab-item {
+      transition: all 0.2s ease-in-out;
+      white-space: nowrap;
+    }
+
+    .tab-item:hover {
+      background-color: #f1f5f9;
+    }
+
+    /* Style untuk iframe container */
+    #iframe-container {
+      position: relative;
+      height: calc(100vh - 150px); /* Sesuaikan tinggi berdasarkan header, tabs dan footer */
+      overflow: hidden;
+    }
+
+    #iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      overflow: auto;
+    }
+
+    /* Animasi untuk tab aktif */
+    .tab-item.active {
+      position: relative;
+    }
+
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: #3b82f6;
+      transition: all 0.3s ease;
+    }
+
+    /* Tombol close tab */
+    .close-tab {
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .close-tab:hover {
+      opacity: 1;
+}
+  </style>
   <!-- ========== Style ========== -->
    {% block style %}{% endblock %}
   <!-- ========== END Style ========== -->
@@ -66,12 +124,26 @@
 
     <div class="content">
 
-      <!-- Start::main-content -->
-      <div class="main-content">
+      <!-- Start::tabs-container -->
+      <div class="tabs-navigation dark:bg-primary shadow-sm flex overflow-x-auto">
+        <div id="tab-bar" class="flex">
+          <!-- Tab items will be dynamically added here -->
+        </div>
+      </div>
+      <!-- End::tabs-container -->
+  
+      <!-- Start::iframe-container -->
+      <div id="iframe-container" class="w-full h-full">
+        <!-- iframes will be dynamically added here -->
+      </div>
+      <!-- End::iframe-container -->
+  
+      <!-- Start::main-content (Hidden, will be loaded in iframes) -->
+      <div class="main-content hidden">
         {% block content %}{% endblock %}
       </div>
       <!-- Start::main-content -->
-
+  
     </div>
 
     <!-- ========== Search Modal ========== -->
@@ -138,6 +210,136 @@
 
   <!-- Flatpickr JS -->
   <script src="{% static 'assets/libs/flatpickr/flatpickr.min.js' %}"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Iframe management
+      const tabBar = document.getElementById('tab-bar');
+      const iframeContainer = document.getElementById('iframe-container');
+      const activeTabClass = 'border-b-2 border-blue-500 text-blue-600 border-primary font-semibold';
+      const inactiveTabClass = 'hover:bg-gray-100 text-gray-700';
+      
+      // Map to store opened tabs
+      const openedTabs = new Map();
+      let activeTabId = null;
+      
+      // Function to create a new tab and iframe
+      function createTab(url, title, icon) {
+        // Generate unique ID for the tab
+        const tabId = 'tab-' + Date.now();
+        
+        // Create tab element
+        const tab = document.createElement('div');
+        tab.id = tabId;
+        tab.className = `tab-item flex items-center py-2 px-4 cursor-pointer ${openedTabs.size === 0 ? activeTabClass : inactiveTabClass}`;
+        tab.innerHTML = `
+          <i class="${icon || 'ri-file-list-line'} mr-2"></i>
+          <span>${title}</span>
+          <button class="ml-2 text-gray-500 hover:text-gray-700 close-tab">
+            <i class="ri-close-line"></i>
+          </button>
+        `;
+        
+        // Create iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.className = 'w-full h-screen border-none';
+        iframe.id = `iframe-${tabId}`;
+        iframe.style.display = openedTabs.size === 0 ? 'block' : 'none';
+        
+        // Store tab information
+        openedTabs.set(tabId, {
+          url,
+          title,
+          icon,
+          element: tab,
+          iframe
+        });
+        
+        // Set active tab if this is the first one
+        if (openedTabs.size === 1) {
+          activeTabId = tabId;
+        }
+        
+        // Add tab to the tab bar
+        tabBar.appendChild(tab);
+        
+        // Add iframe to the container
+        iframeContainer.appendChild(iframe);
+        
+        // Add click event to switch tabs
+        tab.addEventListener('click', function(e) {
+          if (e.target.closest('.close-tab')) {
+            // Close tab logic
+            e.stopPropagation();
+            closeTab(tabId);
+          } else {
+            // Switch tab logic
+            activateTab(tabId);
+          }
+        });
+        
+        return tabId;
+      }
+      
+      // Function to activate a tab
+      function activateTab(tabId) {
+        if (!openedTabs.has(tabId)) return;
+        
+        // Deactivate current active tab
+        if (activeTabId && openedTabs.has(activeTabId)) {
+          openedTabs.get(activeTabId).element.classList.remove(...activeTabClass.split(' '));
+          openedTabs.get(activeTabId).element.classList.add(...inactiveTabClass.split(' '));
+          openedTabs.get(activeTabId).iframe.style.display = 'none';
+        }
+        
+        // Activate new tab
+        openedTabs.get(tabId).element.classList.remove(...inactiveTabClass.split(' '));
+        openedTabs.get(tabId).element.classList.add(...activeTabClass.split(' '));
+        openedTabs.get(tabId).iframe.style.display = 'block';
+        
+        activeTabId = tabId;
+      }
+      
+      // Function to close a tab
+      function closeTab(tabId) {
+        if (!openedTabs.has(tabId)) return;
+        
+        const tab = openedTabs.get(tabId);
+        
+        // Remove tab and iframe from DOM
+        tab.element.remove();
+        tab.iframe.remove();
+        
+        // Remove from our Map
+        openedTabs.delete(tabId);
+        
+        // If we closed the active tab, activate another one if available
+        if (tabId === activeTabId && openedTabs.size > 0) {
+          const nextTabId = openedTabs.keys().next().value;
+          activateTab(nextTabId);
+        } else if (openedTabs.size === 0) {
+          // If no tabs left, clear activeTabId
+          activeTabId = null;
+        }
+      }
+      
+      // Add this function to window to make it accessible from sidebar
+      window.openInTab = function(url, title, icon) {
+        // Check if tab with this URL already exists
+        for (const [id, tab] of openedTabs.entries()) {
+          if (tab.url === url) {
+            activateTab(id);
+            return;
+          }
+        }
+        
+        // Create new tab if it doesn't exist
+        const tabId = createTab(url, title, icon);
+        activateTab(tabId);
+      };
+    });
+  </script>
 
   <!-- Custom JS -->
   {% block script %}{% endblock %}

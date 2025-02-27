@@ -62,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "django_browser_reload.middleware.BrowserReloadMiddleware",
+    # 'core.middleware.IFrameMiddleware',
 ]
 
 ROOT_URLCONF = 'setup.urls'
@@ -166,3 +167,13 @@ STATICFILES_FINDERS = [
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Keamanan untuk memperbolehkan iframe
+X_FRAME_OPTIONS = 'ALLOWALL'
+CSRF_COOKIE_SAMESITE = None
+SESSION_COOKIE_SAMESITE = None
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# Untuk development saja (jangan gunakan di produksi)
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
