@@ -6,6 +6,7 @@ media/
 data/
 env/
 .env
+static/css/tailwind.css
 *.private.py
 *.pyc
 *.egg
