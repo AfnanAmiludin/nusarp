@@ -15,9 +15,9 @@ def seed():
     dashboard_menu = Menu.objects.create(title="Dashboards", icon="ri-home-8-line", url="#", category=main_category, order=1)
 
     # Submenu Dashboards
-    sales_menu = Menu.objects.create(title="Sales", parent=dashboard_menu, url="index.html", order=2)
-    ecommerce_menu = Menu.objects.create(title="Ecommerce", parent=dashboard_menu, url="index2.html", order=3)
-    crypto_menu = Menu.objects.create(title="Crypto", parent=dashboard_menu, url="index3.html", order=4)
+    sales_menu = Menu.objects.create(title="Sales", parent=dashboard_menu, url="#", order=2)
+    ecommerce_menu = Menu.objects.create(title="Ecommerce", parent=dashboard_menu, url="#", order=3)
+    crypto_menu = Menu.objects.create(title="Crypto", parent=dashboard_menu, url="#", order=4)
 
     # Submenu level 2 untuk "Sales"
     sales_reports = Menu.objects.create(title="Reports", parent=sales_menu, url="sales_reports.html", order=1)
@@ -35,8 +35,8 @@ def seed():
     components_menu = Menu.objects.create(title="Components", icon="ri-inbox-line", url="#", category=general_category, order=1)
 
     # Submenu Components
-    accordion_menu = Menu.objects.create(title="Accordion", parent=components_menu, url="accordion.html", order=1)
-    alerts_menu = Menu.objects.create(title="Alerts", parent=components_menu, url="alerts.html", order=2)
+    accordion_menu = Menu.objects.create(title="Accordion", parent=components_menu, url="#", order=1)
+    alerts_menu = Menu.objects.create(title="Alerts", parent=components_menu, url="#", order=2)
 
     # Submenu level 2 untuk "Accordion"
     accordion_basic = Menu.objects.create(title="Basic", parent=accordion_menu, url="accordion_basic.html", order=1)

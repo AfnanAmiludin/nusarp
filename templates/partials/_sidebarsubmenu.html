@@ -1,0 +1,30 @@
+{% if submenu.submenus.all %}
+    <li class="slide has-sub">
+        <a href="{{ submenu.url|default:'#' }}" class="side-menu__item">
+            <i class="{{ submenu.icon }} side-menu__icon"></i>
+            <span class="side-menu__label">{{ submenu.title }}</span>
+            <i class="ri ri-arrow-right-s-line side-menu__angle"></i>
+        </a>
+        <ul class="slide-menu child2">
+            {% for sub_submenu in submenu.submenus.all %}
+                {% if sub_submenu.submenus.all %}
+                    {% include 'partials/_sidebarsubmenu.html' with submenu=sub_submenu %}
+                {% else %}
+                    <li class="slide">
+                        <a href="{{ sub_submenu.url|default:'#' }}" class="side-menu__item">
+                            <i class="{{ sub_submenu.icon }} side-menu__icon"></i>
+                            <span class="side-menu__label">{{ sub_submenu.title }}</span>
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </li>
+{% else %}
+    <li class="slide">
+        <a href="{{ submenu.url|default:'#' }}" class="side-menu__item">
+            <i class="{{ submenu.icon }} side-menu__icon"></i>
+            <span class="side-menu__label">{{ submenu.title }}</span>
+        </a>
+    </li>
+{% endif %}
