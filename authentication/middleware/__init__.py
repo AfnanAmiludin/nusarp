@@ -1,1 +1,4 @@
-__all__ = []
+from authentication.middleware.middleware import LoginRequiredMiddleware
+__all__ = [
+    LoginRequiredMiddleware
+]
