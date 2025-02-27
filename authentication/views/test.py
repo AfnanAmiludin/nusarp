@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 class TestView(View):
@@ -24,10 +24,13 @@ class TestView(View):
 
     def get(self, request):
         return render(request, 'login.html')
+    
+class LogoutView(View):
+    def get(self, request):
+        logout(request)
+        messages.success(request, 'Anda berhasil logout.')
+        return redirect('login')
 
 class DashboardView (LoginRequiredMixin, View):
-    login_url = '/login/'
-    redirect_field_name = 'next'
-    
     def get(self, request):
         return render(request, 'dashboard.html')
