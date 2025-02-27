@@ -148,9 +148,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static/assets"]
+STATICFILES_DIRS = [BASE_DIR / "static/"]
 
-COMPRESS_ROOT = BASE_DIR / 'static/assets'
+COMPRESS_ROOT = BASE_DIR / 'static/'
 COMPRESS_ENABLED = True
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',

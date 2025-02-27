@@ -1,93 +1,148 @@
 {% load compress %}
 {% load tailwind_cli %}
+{% load static %}
+{% load i18n %}
+
 <!DOCTYPE html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard</title>
-    {% tailwind_css %}
-    <script
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-      defer
-    ></script>
-  </head>
-  <body class="bg-gray-100" x-data="{ sidebarOpen: true }">
-    <div class="flex">
-      <!-- Sidebar -->
-      <aside
-        class="bg-blue-900 text-white h-screen fixed top-0 left-0 transition-all duration-300 ease-in-out"
-        :class="sidebarOpen ? 'w-64' : 'w-16'"
-      >
-        <nav class="p-5 flex flex-col space-y-4">
-          <div class="flex flex-row items-center justify-between">
-            <header class="text-2xl" x-show="sidebarOpen" x-transition.opacity>
-              DjangoTail
-            </header>
-            <button
-              @click="sidebarOpen = !sidebarOpen"
-              class="text-white text-2xl focus:outline-none transition-transform transform hover:scale-100"
-            >
-              ☰
-            </button>
-          </div>
-          <ul class="mt-6">
-            <li>
-              <a
-                href="#"
-                class="flex items-center p-2 rounded transition hover:bg-blue-700"
-              >
-                <span>🏠</span>
-                <span class="ml-2" x-show="sidebarOpen" x-transition.opacity
-                  >Home</span
-                >
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                class="flex items-center p-2 rounded transition hover:bg-blue-700"
-              >
-                <span>📊</span>
-                <span class="ml-2" x-show="sidebarOpen" x-transition.opacity
-                  >Reports</span
-                >
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                class="flex items-center p-2 rounded transition hover:bg-blue-700"
-              >
-                <span>⚙️</span>
-                <span class="ml-2" x-show="sidebarOpen" x-transition.opacity
-                  >Settings</span
-                >
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+<html lang="en" dir="ltr" data-nav-layout="vertical" class="light" data-header-styles="light" data-menu-styles="dark">
 
-      <!-- Main Content -->
-      <main
-        class="flex-1 min-h-screen transition-all duration-300 ease-in-out ml-16"
-        :class="sidebarOpen ? 'ml-64' : 'ml-16'"
-      >
-        <!-- Header -->
-        <header
-          class="bg-white p-4 shadow flex justify-between items-center w-full"
-        >
-          <h1 class="text-xl font-semibold">Dashboard</h1>
-          <div>
-            <span class="text-gray-700">👤 Admin</span>
-          </div>
-        </header>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> ERP NUSANTARA - {% block title %}{% endblock %}</title>
+    <meta name="description" content="ERP NUSANTARA - {% block description %}{% endblock %}">
+    <meta name="keywords" content="ERP NUSANTARA - {% block keywords %}{% endblock %}">
 
-        <!-- Content -->
-        <div class="p-6">{% block content %}{% endblock %}</div>
-      </main>
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'assets/img/brand-logos/favicon.ico' %}">
+
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+    <!-- Style Css -->
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+
+    <!-- Simplebar Css -->
+    <link rel="stylesheet" href="{% static 'assets/libs/simplebar/simplebar.min.css' %}">
+
+    <!-- Color Picker Css -->
+    <link rel="stylesheet" href="{% static 'assets/libs/@simonwep/pickr/themes/nano.min.css' %}">
+
+    <!-- Quil Css -->
+    <link id="style" href="{% static 'assets/libs/quill/quill.snow.css' %}" rel="stylesheet">
+
+    <!-- Choices Css -->
+    <link rel="stylesheet" href="{% static 'assets/libs/choices.js/public/assets/styles/choices.min.css' %}">
+
+    <!-- Filepond CSS -->
+    <link rel="stylesheet" href="{% static 'assets/libs/filepond/filepond.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/libs/filepond-plugin-image-preview/filepond-plugin-image-preview.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/libs/filepond-plugin-image-edit/filepond-plugin-image-edit.min.css' %}">
+
+    <!-- Flatpickr Css -->
+    <link rel="stylesheet" href="{% static 'assets/libs/flatpickr/flatpickr.min.css' %}">
+
+</head>
+
+<body>
+
+  <!-- ========== Style ========== -->
+   {% block style %}{% endblock %}
+  <!-- ========== END Style ========== -->
+
+  <!-- ========== Switcher  ========== -->
+  {% include 'partials/_switcher.html' %}
+  <!-- ========== END Switcher  ========== -->
+
+  <div class="page">
+
+    <!-- Start::app-sidebar -->
+    {% include 'partials/_sidebar.html' %}
+    <!-- End::app-sidebar -->
+
+    <!-- Start::Header -->
+    {% include 'partials/_header.html' %}
+    <!-- End::Header -->
+
+    <div class="content">
+
+      <!-- Start::main-content -->
+      <div class="main-content">
+        {% block content %}{% endblock %}
+      </div>
+      <!-- Start::main-content -->
+
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
-  </body>
+
+    <!-- ========== Search Modal ========== -->
+    {% include 'partials/_modals.html' %}
+    <!-- ========== END Search Modal ========== -->
+
+    <!-- ========== Footer ========== -->
+    {% include 'partials/_footer.html' %}
+
+
+  </div>
+
+  <!-- Back To Top -->
+  <div class="scrollToTop">
+      <span class="arrow"><i class="ri-arrow-up-s-fill text-xl"></i></span>
+  </div>
+
+  <div id="responsive-overlay"></div>
+
+  <!-- popperjs -->
+  <script src="{% static 'assets/libs/@popperjs/core/umd/popper.min.js' %}"></script>
+
+  <!-- Color Picker JS -->
+  <script src="{% static 'assets/libs/@simonwep/pickr/pickr.es5.min.js' %}"></script>
+
+  <!-- sidebar JS -->
+  <script src="{% static 'assets/js/defaultmenu.js' %}"></script>
+
+  <!-- sticky JS -->
+  <script src="{% static 'assets/js/sticky.js' %}"></script>
+
+  <!-- Switch JS -->
+  <script src="{% static 'assets/js/switch.js' %}"></script>
+
+  <!-- Preline JS -->
+  <script src="{% static 'assets/libs/preline/preline.js' %}"></script>
+
+  <!-- Simplebar JS -->
+  <script src="{% static 'assets/libs/simplebar/simplebar.min.js' %}"></script>
+
+  <!-- Custom JS -->
+  <script src="{% static 'assets/js/custom.js' %}"></script>
+
+  <!-- Custom-Switcher JS -->
+  <script src="{% static 'assets/js/custom-switcher.js' %}"></script>
+
+  <!-- Quill Editor JS -->
+  <script src="{% static 'assets/libs/quill/quill.min.js' %}"></script>
+
+  <!-- Choices JS -->
+  <script src="{% static 'assets/libs/choices.js/public/assets/scripts/choices.min.js' %}"></script>
+
+  <!-- Filepond JS -->
+  <script src="{% static 'assets/libs/filepond/filepond.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-image-preview/filepond-plugin-image-preview.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-image-exif-orientation/filepond-plugin-image-exif-orientation.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-file-validate-size/filepond-plugin-file-validate-size.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-file-encode/filepond-plugin-file-encode.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-image-edit/filepond-plugin-image-edit.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-file-validate-type/filepond-plugin-file-validate-type.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-image-crop/filepond-plugin-image-crop.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-image-resize/filepond-plugin-image-resize.min.js' %}"></script>
+  <script src="{% static 'assets/libs/filepond-plugin-image-transform/filepond-plugin-image-transform.min.js' %}"></script>
+
+  <!-- Flatpickr JS -->
+  <script src="{% static 'assets/libs/flatpickr/flatpickr.min.js' %}"></script>
+
+  <!-- Custom JS -->
+  {% block script %}{% endblock %}
+  <!-- END Custom JS -->
+
+</body>
+
 </html>

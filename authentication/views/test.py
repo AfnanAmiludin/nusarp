@@ -3,4 +3,9 @@ from django.views import View
 
 class TestView (View):
     def get(self, request):
-        return render(request, 'index.html')
+        return render(request, 'login.html')
+
+
+class DashboardView (View):
+    def get(self, request):
+        return render(request, 'dashboard.html')

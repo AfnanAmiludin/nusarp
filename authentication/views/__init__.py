@@ -1,4 +1,5 @@
-from authentication.views.test import TestView
+from authentication.views.test import TestView, DashboardView
 __all__ = [
-    'TestView',
+    TestView,
+    DashboardView,
 ]
