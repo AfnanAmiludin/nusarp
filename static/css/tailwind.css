@@ -988,9 +988,6 @@
   .my-3 {
     margin-block: calc(var(--spacing) * 3);
   }
-  .my-6 {
-    margin-block: calc(var(--spacing) * 6);
-  }
   .my-16 {
     margin-block: calc(var(--spacing) * 16);
   }
@@ -1026,9 +1023,6 @@
   }
   .mt-6 {
     margin-top: calc(var(--spacing) * 6);
-  }
-  .mt-8 {
-    margin-top: calc(var(--spacing) * 8);
   }
   .mt-12 {
     margin-top: calc(var(--spacing) * 12);
@@ -1110,9 +1104,6 @@
   }
   .ml-2 {
     margin-left: calc(var(--spacing) * 2);
-  }
-  .ml-4 {
-    margin-left: calc(var(--spacing) * 4);
   }
   .ml-20 {
     margin-left: calc(var(--spacing) * 20);
@@ -2123,11 +2114,17 @@
   .bg-gray-900\/10 {
     background-color: color-mix(in oklab, var(--color-gray-900) 10%, transparent);
   }
+  .bg-green-100 {
+    background-color: var(--color-green-100);
+  }
   .bg-green-400 {
     background-color: var(--color-green-400);
   }
   .bg-indigo-500 {
     background-color: var(--color-indigo-500);
+  }
+  .bg-red-100 {
+    background-color: var(--color-red-100);
   }
   .bg-slate-200 {
     background-color: var(--color-slate-200);
@@ -2449,9 +2446,6 @@
   .text-end {
     text-align: end;
   }
-  .text-right {
-    text-align: right;
-  }
   .text-start {
     text-align: start;
   }
@@ -2589,9 +2583,6 @@
   .text-black {
     color: var(--color-black);
   }
-  .text-blue-500 {
-    color: var(--color-blue-500);
-  }
   .text-gray-100 {
     color: var(--color-gray-100);
   }
@@ -2616,11 +2607,17 @@
   .text-gray-900 {
     color: var(--color-gray-900);
   }
+  .text-green-700 {
+    color: var(--color-green-700);
+  }
   .text-inherit {
     color: inherit;
   }
   .text-red-500 {
     color: var(--color-red-500);
+  }
+  .text-red-700 {
+    color: var(--color-red-700);
   }
   .text-slate-500 {
     color: var(--color-slate-500);
@@ -3601,13 +3598,6 @@
       }
     }
   }
-  .hover\:text-blue-700 {
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-blue-700);
-      }
-    }
-  }
   .hover\:text-gray-200 {
     &:hover {
       @media (hover: hover) {
@@ -3692,11 +3682,6 @@
       border-color: var(--color-gray-200);
     }
   }
-  .focus\:bg-gray-100 {
-    &:focus {
-      background-color: var(--color-gray-100);
-    }
-  }
   .focus\:bg-indigo-400 {
     &:focus {
       background-color: var(--color-indigo-400);
@@ -3705,11 +3690,6 @@
   .focus\:bg-white {
     &:focus {
       background-color: var(--color-white);
-    }
-  }
-  .focus\:text-blue-700 {
-    &:focus {
-      color: var(--color-blue-700);
     }
   }
   .focus\:text-white {

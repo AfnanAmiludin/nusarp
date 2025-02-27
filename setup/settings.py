@@ -53,6 +53,8 @@ for app_name in os.listdir(apps_directory):
         INSTALLED_APPS.append(f'{app_name}')
 
 
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -62,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "django_browser_reload.middleware.BrowserReloadMiddleware",
+    "authentication.middleware.LoginRequiredMiddleware"
 ]
 
 ROOT_URLCONF = 'setup.urls'
