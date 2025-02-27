@@ -17,16 +17,14 @@ from django.utils.translation import gettext_lazy as _
 
 from authentication import settings
 from authentication.managers import UserManager
-from core.fields import IdentifierField, TimeZoneField, StatusField, EncryptedCharField
+from core.fields import TimeZoneField, EncryptedCharField
 from core.models import Base, History, Tracker
 
 # Create your models here.
 class User(Base, AbstractBaseUser, PermissionsMixin, ):
     username_validator = UnicodeUsernameValidator()
-    user_id = IdentifierField(
+    user_id = models.CharField(
         primary_key=True,
-        company=None,
-        prefix='USR',
         verbose_name=_('user id'),
         help_text=_('Used for identity for signin'),
     )
@@ -117,8 +115,18 @@ class User(Base, AbstractBaseUser, PermissionsMixin, ):
         verbose_name=_('date joined'),
         help_text=_('Used for tracking join date'),
     )
-    status = StatusField(transition=False, )
+    status = models.CharField(
+        default='draft',
+        verbose_name=_('status'),
+        help_text=_('Used for status'),
+    )
     tracker = Tracker()
+    history = History(
+        bases=[Base, ],
+        table_name=u'\"history".\"{}_user\"'.format(settings.SCHEMA),
+        verbose_name=_('Used store history user'),
+        excluded_fields=['modified', 'last_activity_date', ],
+    )
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'user_name'

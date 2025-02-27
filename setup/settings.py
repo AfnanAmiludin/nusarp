@@ -25,7 +25,7 @@ DEBUG = env.bool('DEBUG', default=False)
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = [] if DEBUG else ['*', ]
 
-
+AUTH_USER_MODEL = 'authentication.User'
 # Application definition
 
 INSTALLED_APPS = [
