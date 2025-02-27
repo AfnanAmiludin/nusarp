@@ -21,7 +21,7 @@ class Command(BaseCommand):
             'apis/tests',
             'constants',
             'fields',
-            'fixtures',
+            'seeders',
             'forms',
             'management',
             'management/commands',
@@ -61,7 +61,8 @@ class Command(BaseCommand):
             'models/__init__.py',
             'views/__init__.py',
             'tests/__init__.py',
-            'utils/__init__.py',    
+            'utils/__init__.py',  
+            'seeders/__init__.py',  
         ]
 
         for file_path in init_files:
