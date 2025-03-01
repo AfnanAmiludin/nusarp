@@ -1,6 +1,81 @@
-{% block content %}
-<div class="iframe-content">
-    <h1 class="text-red-50">Daftar Produk</h1>
-    <!-- konten lainnya -->
-</div>
-{% endblock %}
+{% load static %}
+{% load compress %}
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-nav-layout="vertical" class="light" data-header-styles="light" data-menu-styles="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> ERP NUSANTARA - {% block title %}{% endblock %}</title>
+    <meta name="description" content="ERP NUSANTARA - {% block description %}{% endblock %}">
+    <meta name="keywords" content="ERP NUSANTARA - {% block keywords %}{% endblock %}">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static '/assets/img/brand-logos/favicon.ico' %}">
+
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+    <!-- Style Css -->
+    <link rel="stylesheet" href="{% static '/assets/css/style.css' %}">
+
+    <!-- Simplebar Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/simplebar/simplebar.min.css' %}">
+
+    <!-- Color Picker Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/@simonwep/pickr/themes/nano.min.css' %}">
+
+    <!-- Tabulator Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/tabulator-tables/css/tabulator.min.css' %}">
+
+    <!-- Choices Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/choices.js/public/assets/styles/choices.min.css' %}">
+
+</head>
+
+<body>
+
+    <div class="col-span-12">
+        <div class="box">
+            <div class="box-header">
+            <h5 class="box-title">Basic DataTable</h5>
+            </div>
+            <div class="box-body">
+            <div class="overflow-auto table-bordered">
+                <div id="basic-table" class="ti-custom-table ti-striped-table ti-custom-table-hover"></div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{%static 'assets/libs/tabulator-tables/js/tabulator.min.js'%}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/user/')
+                .then(response => response.json())
+                .then(data => {
+                    var table = new Tabulator("#basic-table", {
+                        layout: "fitColumns",
+                        pagination: "local",
+                        paginationSize: 10,
+                        paginationSizeSelector: [5, 10, 15, 20, 25],
+                        paginationCounter: "rows",
+                        data: data,
+                        columns: [
+                            { title: "User ID", field: "user_id", sorter: "number" },
+                            { title: "Username", field: "user_name", sorter: "string" },
+                            { title: "Real Name", field: "real_name", sorter: "string" },
+                            { title: "Email", field: "email", sorter: "string" },
+                            { title: "Phone", field: "phone", sorter: "string" },
+                        ],
+                    });
+                })
+                .catch(error => console.error('Error loading data:', error));
+        });
+        
+    </script>
+
+</body>
+
+</html>

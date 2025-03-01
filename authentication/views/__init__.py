@@ -1,7 +1,7 @@
-from authentication.views.test import TestView, DashboardView, LogoutView
+from authentication.views.login import LoginView, DashboardView, LogoutView
 from authentication.views.user import UserView
 __all__ = [
-    TestView,
+    LoginView,
     DashboardView,
     UserView,
     LogoutView
