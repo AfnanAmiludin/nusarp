@@ -5,25 +5,28 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-class TestView(View):
+class LoginView(View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect('dashboard')
+        return render(request, 'login.html')
+
     def post(self, request):
+        if request.user.is_authenticated:
+            return redirect('dashboard')
+
         user_name = request.POST.get('user_name')
         password = request.POST.get('password')
         user = authenticate(request, user_name=user_name, password=password)
-        print("MASOKKK22", user_name)
-        print("MASOKKK22", password)
         if user is not None:
-            
             login(request, user)
             messages.success(request, f'Login berhasil! Selamat datang, {user.user_name}')
-            return redirect('dashboard')  # Pastikan URL-nya benar
+            return redirect('dashboard')
         else:
             messages.error(request, 'Username atau password salah. Silakan coba lagi.')
 
         return render(request, 'login.html')
 
-    def get(self, request):
-        return render(request, 'login.html')
     
 class LogoutView(View):
     def get(self, request):

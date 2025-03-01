@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "django_tailwind_cli",
+    'rest_framework',
     "compressor",
     "clearcache",
     # "django_browser_reload",
