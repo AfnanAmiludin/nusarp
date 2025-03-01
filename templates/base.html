@@ -19,6 +19,7 @@
 
     <!-- Style Css -->
     <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/style.min.css' %}">
 
     <!-- Simplebar Css -->
     <link rel="stylesheet" href="{% static 'assets/libs/simplebar/simplebar.min.css' %}">
@@ -124,6 +125,7 @@
 
     <div class="content">
 
+      {% if request.path != '/dashboard/' %}
       <!-- Start::tabs-container -->
       <div class="tabs-navigation dark:bg-primary shadow-sm flex overflow-x-auto">
         <div id="tab-bar" class="flex">
@@ -131,19 +133,20 @@
         </div>
       </div>
       <!-- End::tabs-container -->
-  
+
       <!-- Start::iframe-container -->
       <div id="iframe-container" class="w-full h-full">
         <!-- iframes will be dynamically added here -->
       </div>
       <!-- End::iframe-container -->
-  
+      {% endif %}
+
       <!-- Start::main-content (Hidden, will be loaded in iframes) -->
-      <div class="main-content hidden">
+      <div class="main-content">
         {% block content %}{% endblock %}
       </div>
       <!-- Start::main-content -->
-  
+
     </div>
 
     <!-- ========== Search Modal ========== -->
@@ -218,16 +221,16 @@
       const iframeContainer = document.getElementById('iframe-container');
       const activeTabClass = 'border-b-2 border-blue-500 text-blue-600 border-primary font-semibold';
       const inactiveTabClass = 'hover:bg-gray-100 text-gray-700';
-      
+
       // Map to store opened tabs
       const openedTabs = new Map();
       let activeTabId = null;
-      
+
       // Function to create a new tab and iframe
       function createTab(url, title, icon) {
         // Generate unique ID for the tab
         const tabId = 'tab-' + Date.now();
-        
+
         // Create tab element
         const tab = document.createElement('div');
         tab.id = tabId;
@@ -239,14 +242,14 @@
             <i class="ri-close-line"></i>
           </button>
         `;
-        
+
         // Create iframe
         const iframe = document.createElement('iframe');
         iframe.src = url;
         iframe.className = 'w-full h-screen border-none';
         iframe.id = `iframe-${tabId}`;
         iframe.style.display = openedTabs.size === 0 ? 'block' : 'none';
-        
+
         // Store tab information
         openedTabs.set(tabId, {
           url,
@@ -255,18 +258,18 @@
           element: tab,
           iframe
         });
-        
+
         // Set active tab if this is the first one
         if (openedTabs.size === 1) {
           activeTabId = tabId;
         }
-        
+
         // Add tab to the tab bar
         tabBar.appendChild(tab);
-        
+
         // Add iframe to the container
         iframeContainer.appendChild(iframe);
-        
+
         // Add click event to switch tabs
         tab.addEventListener('click', function(e) {
           if (e.target.closest('.close-tab')) {
@@ -278,42 +281,42 @@
             activateTab(tabId);
           }
         });
-        
+
         return tabId;
       }
-      
+
       // Function to activate a tab
       function activateTab(tabId) {
         if (!openedTabs.has(tabId)) return;
-        
+
         // Deactivate current active tab
         if (activeTabId && openedTabs.has(activeTabId)) {
           openedTabs.get(activeTabId).element.classList.remove(...activeTabClass.split(' '));
           openedTabs.get(activeTabId).element.classList.add(...inactiveTabClass.split(' '));
           openedTabs.get(activeTabId).iframe.style.display = 'none';
         }
-        
+
         // Activate new tab
         openedTabs.get(tabId).element.classList.remove(...inactiveTabClass.split(' '));
         openedTabs.get(tabId).element.classList.add(...activeTabClass.split(' '));
         openedTabs.get(tabId).iframe.style.display = 'block';
-        
+
         activeTabId = tabId;
       }
-      
+
       // Function to close a tab
       function closeTab(tabId) {
         if (!openedTabs.has(tabId)) return;
-        
+
         const tab = openedTabs.get(tabId);
-        
+
         // Remove tab and iframe from DOM
         tab.element.remove();
         tab.iframe.remove();
-        
+
         // Remove from our Map
         openedTabs.delete(tabId);
-        
+
         // If we closed the active tab, activate another one if available
         if (tabId === activeTabId && openedTabs.size > 0) {
           const nextTabId = openedTabs.keys().next().value;
@@ -323,7 +326,7 @@
           activeTabId = null;
         }
       }
-      
+
       // Add this function to window to make it accessible from sidebar
       window.openInTab = function(url, title, icon) {
         // Check if tab with this URL already exists
@@ -333,7 +336,7 @@
             return;
           }
         }
-        
+
         // Create new tab if it doesn't exist
         const tabId = createTab(url, title, icon);
         activateTab(tabId);
