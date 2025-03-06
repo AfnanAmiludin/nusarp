@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> ERP NUSANTARA - {% block title %}{% endblock %}</title>
+    <title> ERP NUSANTARA {% block title %}{% endblock %}</title>
     <meta name="description" content="ERP NUSANTARA - {% block description %}{% endblock %}">
     <meta name="keywords" content="ERP NUSANTARA - {% block keywords %}{% endblock %}">
 
@@ -39,6 +39,12 @@
 
     <!-- Flatpickr Css -->
     <link rel="stylesheet" href="{% static 'assets/libs/flatpickr/flatpickr.min.css' %}">
+
+    <!-- Datatables CSS -->
+    <link rel="stylesheet" href="{% static 'assets/css/datatables.min.css' %}">
+
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
 
 </head>
 
@@ -211,17 +217,45 @@
   <!-- Flatpickr JS -->
   <script src="{% static 'assets/libs/flatpickr/flatpickr.min.js' %}"></script>
 
+  <!-- Jquery JS -->
+  <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
+
+  <!-- Datatables JS -->
+  <script src="{% static 'assets/js/datatables.min.js' %}"></script>
+
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    $(document).ready(function() {
       // Iframe management
-      const tabBar = document.getElementById('tab-bar');
-      const iframeContainer = document.getElementById('iframe-container');
-      const activeTabClass = 'border-b-2 border-blue-500 text-blue-600 border-primary font-semibold';
+      const tabBar = $('#tab-bar');
+      const iframeContainer = $('#iframe-container');
+      const activeTabClass = 'border-b-2 border-blue-500 border-primary font-bold';
       const inactiveTabClass = 'hover:bg-gray-100 text-gray-700';
       
       // Map to store opened tabs
       const openedTabs = new Map();
       let activeTabId = null;
+      
+      // Fungsi untuk memperbarui judul dokumen
+      function updateDocumentTitle(title) {
+        document.title = title + " | ERP NUSANTARA";
+      }
+      
+      // Mendengarkan pesan dari iframe
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'iframeTitle') {
+          // Perbarui judul tab dan dokumen jika berasal dari iframe aktif
+          if (activeTabId) {
+            const activeTab = openedTabs.get(activeTabId);
+            // Perbarui judul tab
+            const tabTitleSpan = activeTab.element.find('span');
+            tabTitleSpan.text(event.data.title);
+            activeTab.title = event.data.title;
+            
+            // Perbarui judul dokumen
+            updateDocumentTitle(event.data.title);
+          }
+        }
+      });
       
       // Function to create a new tab and iframe
       function createTab(url, title, icon) {
@@ -229,23 +263,18 @@
         const tabId = 'tab-' + Date.now();
         
         // Create tab element
-        const tab = document.createElement('div');
-        tab.id = tabId;
-        tab.className = `tab-item flex items-center py-2 px-4 cursor-pointer ${openedTabs.size === 0 ? activeTabClass : inactiveTabClass}`;
-        tab.innerHTML = `
-          <i class="${icon || 'ri-file-list-line'} mr-2"></i>
-          <span>${title}</span>
-          <button class="ml-2 text-gray-500 hover:text-gray-700 close-tab">
-            <i class="ri-close-line"></i>
-          </button>
-        `;
+        const tab = $(`
+          <div id="${tabId}" class="tab-item flex items-center py-2 px-4 cursor-pointer ${openedTabs.size === 0 ? activeTabClass : inactiveTabClass}">
+            <i class="${icon || 'ri-file-list-line'} mr-2"></i>
+            <span>${title}</span>
+            <button class="ml-2 text-gray-500 hover:text-gray-700 close-tab">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+        `);
         
         // Create iframe
-        const iframe = document.createElement('iframe');
-        iframe.src = url;
-        iframe.className = 'w-full h-screen border-none';
-        iframe.id = `iframe-${tabId}`;
-        iframe.style.display = openedTabs.size === 0 ? 'block' : 'none';
+        const iframe = $(`<iframe src="${url}" class="w-full h-screen border-none" id="iframe-${tabId}" style="display: ${openedTabs.size === 0 ? 'block' : 'none'};"></iframe>`);
         
         // Store tab information
         openedTabs.set(tabId, {
@@ -259,17 +288,18 @@
         // Set active tab if this is the first one
         if (openedTabs.size === 1) {
           activeTabId = tabId;
+          updateDocumentTitle(title);
         }
         
         // Add tab to the tab bar
-        tabBar.appendChild(tab);
+        tabBar.append(tab);
         
         // Add iframe to the container
-        iframeContainer.appendChild(iframe);
+        iframeContainer.append(iframe);
         
         // Add click event to switch tabs
-        tab.addEventListener('click', function(e) {
-          if (e.target.closest('.close-tab')) {
+        tab.on('click', function(e) {
+          if ($(e.target).closest('.close-tab').length) {
             // Close tab logic
             e.stopPropagation();
             closeTab(tabId);
@@ -288,15 +318,18 @@
         
         // Deactivate current active tab
         if (activeTabId && openedTabs.has(activeTabId)) {
-          openedTabs.get(activeTabId).element.classList.remove(...activeTabClass.split(' '));
-          openedTabs.get(activeTabId).element.classList.add(...inactiveTabClass.split(' '));
-          openedTabs.get(activeTabId).iframe.style.display = 'none';
+          const activeTab = openedTabs.get(activeTabId);
+          activeTab.element.removeClass(activeTabClass).addClass(inactiveTabClass);
+          activeTab.iframe.hide();
         }
         
         // Activate new tab
-        openedTabs.get(tabId).element.classList.remove(...inactiveTabClass.split(' '));
-        openedTabs.get(tabId).element.classList.add(...activeTabClass.split(' '));
-        openedTabs.get(tabId).iframe.style.display = 'block';
+        const newActiveTab = openedTabs.get(tabId);
+        newActiveTab.element.removeClass(inactiveTabClass).addClass(activeTabClass);
+        newActiveTab.iframe.show();
+        
+        // Perbarui judul dokumen berdasarkan tab aktif
+        updateDocumentTitle(newActiveTab.title);
         
         activeTabId = tabId;
       }
@@ -319,8 +352,9 @@
           const nextTabId = openedTabs.keys().next().value;
           activateTab(nextTabId);
         } else if (openedTabs.size === 0) {
-          // If no tabs left, clear activeTabId
+          // If no tabs left, clear activeTabId and reset document title
           activeTabId = null;
+          document.title = "Your App Name";
         }
       }
       

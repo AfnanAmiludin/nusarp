@@ -7,7 +7,7 @@ class UserView(BaseView):
     """View untuk menampilkan data user"""
     template_name = 'user.html'
     
-    # @method_decorator(login_required)
+    @method_decorator(login_required)
     def get(self, request):
         context = self.get_context_data()
         return self.render_response(request, context)
