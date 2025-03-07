@@ -94,6 +94,7 @@ class UserPermissionViewSet(FormatViewSet, viewsets.ModelViewSet):
     def grant(self, request, *args, **kwargs):
         data = request.data.dict()
         user = request.user
+        print('MUASOKKK: ', data)
         if 'current' in data:
             user = User.objects.get(pk=json.loads(data['current'])['user_id'])
         values = json.loads(data['values'])
