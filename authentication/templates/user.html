@@ -208,6 +208,10 @@
         const permissionButton = document.getElementById('permissionButton');
         const permissionModal = document.getElementById('permissionModal');
         const closePermissionModal = document.getElementById('closePermissionModal');
+        const giveAccessButton = document.getElementById('giveAccessButton');
+        const giveAccessAllButton = document.getElementById('giveAccessAllButton');
+        const takeBackAccessButton = document.getElementById('takeBackAccessButton');
+        const takeBackAccessAllButton = document.getElementById('takeBackAccessAllButton');
 
         // Modal Create
         createButton.addEventListener('click', () => {
@@ -416,18 +420,24 @@
                     current: JSON.stringify({ user_id: userId }),
                 },
                 success: function(data) {
-                    new Tabulator("#givePermission", {
+                    let table = new Tabulator("#givePermission", {
                         layout: "fitColumns",
                         pagination: "local",
                         paginationSize: 10,
                         paginationSizeSelector: [5, 10, 15, 20, 25],
                         paginationCounter: "rows",
                         data: data.data,
-                        selectable: 1,
+                        selectable: true,
                         columns: [
                             { title: "Permission ID", field: "codename", sorter: "string" },
                             { title: "Permission Name", field: "name", sorter: "string" },
                         ],
+                    });
+                    table.on("rowClick", function(e, row) {
+                        row.getElement().classList.toggle('selected-row');
+                    });
+                    table.on("rowSelectionChanged", function(data, rows){
+                        selectedRow = data
                     });
                 },
                 error: function(xhr, status, error) {
@@ -448,24 +458,131 @@
                     current: JSON.stringify({ user_id: userId }),
                 },
                 success: function(data) {
-                    new Tabulator("#accessPermission", {
+                    let table = new Tabulator("#accessPermission", {
                         layout: "fitColumns",
                         pagination: "local",
                         paginationSize: 10,
                         paginationSizeSelector: [5, 10, 15, 20, 25],
                         paginationCounter: "rows",
                         data: data.data,
-                        selectable: 1,
+                        selectable: true,
                         columns: [
                             { title: "Permission ID", field: "codename", sorter: "string" },
                             { title: "Permission Name", field: "name", sorter: "string" },
                         ],
+                    });
+                    table.on("rowClick", function(e, row) {
+                        row.getElement().classList.toggle('selected-row');
+                    });
+                    table.on("rowSelectionChanged", function(data, rows){
+                        selectedRow = data
                     });
                 },
                 error: function(xhr, status, error) {
                 }
             });
         }
+
+
+        $('#giveAccessButton').on('click', function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: '/api/userpermission/grant/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                },
+                data: {
+                    current: JSON.stringify({ user_id: $('#permission_user_id').val() }),
+                    values: JSON.stringify(selectedRow),
+                }, // Ganti dengan formData atau data sesuai kebutuhan
+                success: function (response) {
+                    alert('User updated successfully!');
+                    grantedPermission()
+                    notGrantedPermission()
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors || 'Failed to update user';
+                    alert('Error: ' + JSON.stringify(errors));
+                }
+            });
+        });
+
+        $('#giveAccessAllButton').on('click', function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: '/api/userpermission/grantall/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                },
+                data: {
+                    current: JSON.stringify({ user_id: $('#permission_user_id').val() }),
+                    values: JSON.stringify(Tabulator.findTable("#givePermission")[0].getData()),
+                }, // Ganti dengan formData atau data sesuai kebutuhan
+                success: function (response) {
+                    alert('User updated successfully!');
+                    grantedPermission()
+                    notGrantedPermission()
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors || 'Failed to update user';
+                    alert('Error: ' + JSON.stringify(errors));
+                }
+            });
+        });
+
+        $('#takeBackAccessButton').on('click', function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: '/api/userpermission/revoke/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                },
+                data: {
+                    current: JSON.stringify({ user_id: $('#permission_user_id').val() }),
+                    values: JSON.stringify(selectedRow),
+                }, // Ganti dengan formData atau data sesuai kebutuhan
+                success: function (response) {
+                    alert('User updated successfully!');
+                    grantedPermission()
+                    notGrantedPermission()
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors || 'Failed to update user';
+                    alert('Error: ' + JSON.stringify(errors));
+                }
+            });
+        });
+
+        $('#takeBackAccessAllButton').on('click', function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: '/api/userpermission/revokeall/',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                },
+                data: {
+                    current: JSON.stringify({ user_id: $('#permission_user_id').val() }),
+                    values: JSON.stringify(Tabulator.findTable("#accessPermission")[0].getData()),
+                }, // Ganti dengan formData atau data sesuai kebutuhan
+                success: function (response) {
+                    alert('User updated successfully!');
+                    grantedPermission()
+                    notGrantedPermission()
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors || 'Failed to update user';
+                    alert('Error: ' + JSON.stringify(errors));
+                }
+            });
+        });
         
     </script>
 
