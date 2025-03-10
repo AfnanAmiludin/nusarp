@@ -1,1026 +1,546 @@
 {% extends "base_frame.html" %}
-
-{% block title %}Categories{% endblock %}
+{% block title %}Data Pengguna{% endblock %}
 
 {% block head %}
-<style>
-  /* Custom DataTable styling */
-  .dataTables_wrapper {
-    font-size: 14px;
-    color: #333;
-  }
-  
-  .card {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
-  .table-container {
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
-  table.dataTable thead th {
-    position: relative;
-    background-color: #f8f9fa;
-    padding-right: 30px !important;
-  }
-  
-  table.dataTable thead th .column-menu-toggle {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #6c757d;
-    transition: color 0.2s;
-  }
-  
-  table.dataTable thead th .column-menu-toggle:hover {
-    color: #0d6efd;
-  }
-  
-  .column-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-    z-index: 100;
-    min-width: 160px;
-    display: none;
-  }
-  
-  .column-menu-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  
-  .column-menu-item:hover {
-    background: #f8f9fa;
-  }
-  
-  .column-menu-item i {
-    margin-right: 8px;
-    width: 16px;
-    text-align: center;
-  }
-  
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  
-  .modal-content {
-    background: white;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 500px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  }
-  
-  .btn-action {
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-  
-  .btn-edit {
-    background-color: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
-  }
-  
-  .btn-edit:hover {
-    background-color: rgba(255, 193, 7, 0.2);
-  }
-  
-  .btn-delete {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-  }
-  
-  .btn-delete:hover {
-    background-color: rgba(220, 53, 69, 0.2);
-  }
-  
-  .btn-view {
-    background-color: rgba(13, 110, 253, 0.1);
-    color: #0d6efd;
-  }
-  
-  .btn-view:hover {
-    background-color: rgba(13, 110, 253, 0.2);
-  }
-  
-  /* Filter styling */
-  .filter-chip {
-    display: inline-flex;
-    align-items: center;
-    background: #e9ecef;
-    border-radius: 16px;
-    padding: 4px 12px;
-    margin-right: 8px;
-    margin-bottom: 8px;
-    font-size: 13px;
-  }
-  
-  .filter-chip .close {
-    margin-left: 8px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-  
-  /* Loading indicator */
-  .infinite-scroll-loader {
-    text-align: center;
-    padding: 20px;
-    display: none;
-  }
-  
-  .spinner {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: #0d6efd;
-    animation: spin 1s ease-in-out infinite;
-  }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  
-  /* Toast notifications */
-  .toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1100;
-  }
-  
-  .toast {
-    background: white;
-    border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    max-width: 350px;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
-    opacity: 0;
-  }
-  
-  .toast.show {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  
-  .toast-icon {
-    margin-right: 12px;
-    font-size: 20px;
-  }
-  
-  .toast-success .toast-icon {
-    color: #28a745;
-  }
-  
-  .toast-error .toast-icon {
-    color: #dc3545;
-  }
-  
-  .toast-warning .toast-icon {
-    color: #ffc107;
-  }
-  
-  .toast-info .toast-icon {
-    color: #17a2b8;
-  }
-  
-  .toast-body {
-    flex: 1;
-  }
-  
-  .toast-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  
-  .toast-message {
-    font-size: 14px;
-    color: #6c757d;
-  }
-  
-  .toast-close {
-    margin-left: 12px;
-    cursor: pointer;
-    color: #adb5bd;
-    font-size: 18px;
-  }
-  
-  .toast-close:hover {
-    color: #6c757d;
-  }
-</style>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #f3f4f6;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Modern Card Styling */
+    .card {
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: var(--card-shadow);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Compact Header */
+    .header-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .header-controls h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    /* Minimalist Divider */
+    .divider {
+      border-top: 1px solid var(--border);
+      margin: 0.75rem 0;
+    }
+
+    /* Modern Button Styling */
+    .new-button {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      border: none;
+      transition: background-color 0.2s;
+    }
+
+    .new-button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* Compact and Efficient Search Section */
+    .filters-row {
+      display: flex;
+      justify-content: flex-end; /* Memindahkan ke kanan */
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    
+    .search-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-grow: 1;
+      max-width: 500px;
+      justify-content: flex-end; /* Memindahkan ke kanan */
+    }
+
+    .search-bar {
+      padding: 0.375rem 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border);
+      font-size: 0.875rem;
+      flex-grow: 1;
+      background-color: var(--secondary);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-bar:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .filter-icon {
+      background-color: var(--secondary);
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      border-radius: 0.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .filter-icon:hover {
+      background-color: #e5e7eb;
+      color: var(--text-primary);
+    }
+
+    /* Table Controls */
+    .table-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .table-info {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .density-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .density-btn {
+      background-color: var(--secondary);
+      border: 1px solid var(--border);
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .density-btn.active {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Modern and Compact Table */
+    .table-section {
+      margin-top: 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    
+    /* Tabulator Custom Styling */
+    .tabulator .tabulator-header .tabulator-col {
+      transition: height 0.3s ease;
+    }
+    
+    .tabulator:not(.filters-visible) .tabulator-header .tabulator-col {
+      height: auto !important;
+    }
+    
+    .tabulator.filters-visible .tabulator-header .tabulator-col {
+      height: auto !important;
+    }
+
+    /* Style for column filters to match the main search design */
+.tabulator-header-filter input {
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  padding: 8px 10px 8px 36px; /* Add padding for the search icon */
+  font-size: 0.875rem;
+  width: 100%;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  height: 38px;
+}
+
+.tabulator-header-filter input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  background-color: #fff;
+}
+
+/* Improved search icon styling to match main search */
+.tabulator-header-filter {
+  position: relative;
+}
+
+.tabulator-header-filter::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="rgb(100, 116, 139)"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>');
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: 1;
+  opacity: 0.7;
+}
+
+    .tabulator {
+      border: none;
+      background-color: transparent;
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+    
+    /* CSS untuk header tabel */
+    .tabulator-header {
+      background-color: #f0f4f8 !important; /* Warna background yang berbeda */
+      border-bottom: 1px solid var(--border) !important;
+      padding: 0.25rem 0.2rem !important; /* Mengurangi padding untuk membuat header lebih kecil */
+    }
+    
+    .tabulator-header .tabulator-col {
+      background-color: transparent !important;
+      border-right: none !important;
+      padding: 0.25rem 0.2rem !important; /* Mengurangi padding untuk membuat header lebih kecil */
+      font-size: 0.875rem !important; /* Mengurangi ukuran font */
+      font-weight: 500 !important; /* Menambahkan ketebalan font */
+      color: var(--text-primary) !important; /* Warna teks */
+    }
+    
+    .tabulator-row {
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .tabulator-row.tabulator-row-even {
+      background-color: white;
+    }
+    
+    .tabulator-row.tabulator-row-odd {
+      background-color: var(--secondary);
+    }
+    
+    .tabulator-row:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .tabulator-row .tabulator-cell {
+      padding: 0.5rem;
+      border-right: none;
+    }
+
+    /* CSS untuk kolom pencarian di header */
+    .tabulator-col .tabulator-col-content .tabulator-col-filter {
+      display: none; /* Sembunyikan secara default */
+      margin-top: 0.25rem;
+    }
+
+    .tabulator-col .tabulator-col-content .tabulator-col-filter input {
+      width: 100%;
+      padding: 0.25rem;
+      border: 1px solid var(--border);
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      background-color: var(--secondary);
+    }
+
+    .tabulator-col .tabulator-col-content .tabulator-col-filter input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Active Filters Styling */
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .filter-tag {
+      background-color: var(--secondary);
+      color: var(--text-secondary);
+      border-radius: 1rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .filter-tag .close-btn {
+      cursor: pointer;
+    }
+
+    /* Action buttons */
+    .action-btn {
+      border: none;
+      background: transparent;
+      width: 1.5rem;
+      height: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .action-btn:hover {
+      background-color: var(--secondary);
+      color: var(--text-primary);
+    }
+    
+    .action-btn.edit-btn:hover {
+      color: var(--primary);
+    }
+    
+    .action-btn.delete-btn:hover {
+      color: #ef4444;
+    }
+
+    /* Pagination styling */
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+    }
+    
+    .pagination-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+    
+    .page-btn {
+      background-color: var(--secondary);
+      border: 1px solid var(--border);
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: background-color 0.2s;
+    }
+    
+    .page-btn:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .page-btn.active {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+      .filters-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      
+      .search-container {
+        width: 100%;
+        max-width: none;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-<div class="px-6 py-4">
-  <!-- Page Header -->
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Category Management</h1>
-      <p class="text-sm text-gray-500 dark:text-gray-400">Manage your organization's categories and hierarchies</p>
+<div class="px-4 py-3">
+  <!-- Main Card -->
+  <div class="card">
+    <!-- Title and Controls -->
+    <div class="header-controls">
+      <h2>Data Pengguna</h2>
+      <button class="new-button">
+        <i class="ti ti-plus text-xs"></i> Tambah Data
+      </button>
     </div>
-    <button id="btnAddCategory" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center transition-colors">
-      <i class="ri-add-line mr-2"></i> Add Category
-    </button>
-  </div>
-  
-  <!-- Filter Area -->
-  <div class="mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-    <div class="flex flex-wrap items-center gap-2 mb-2">
-      <div class="text-sm font-medium text-gray-700 dark:text-gray-300">Active Filters:</div>
-      <div id="activeFilters" class="flex flex-wrap gap-2">
-        <!-- Active filters will be added here dynamically -->
-        <span class="empty-filter-message text-sm text-gray-500 italic">No filters applied</span>
-      </div>
-    </div>
-    <div class="flex items-center">
-      <div class="relative flex-grow">
-        <i class="ri-search-line absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input id="globalSearch" type="text" placeholder="Search categories..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div class="ml-4">
-        <button id="btnAdvancedFilters" class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium px-4 py-2 rounded-lg flex items-center transition-colors">
-          <i class="ri-filter-3-line mr-2"></i> Advanced Filters
+    <div class="divider"></div>
+
+    <!-- Search and Filters -->
+    <div class="filters-row">
+      <div class="search-container">
+        <input type="text" id="global-search-input" class="search-bar" placeholder="Cari...">
+        <button class="filter-icon" id="toggle-column-search">
+          <i class="ti ti-search"></i> Pencarian Kolom
+        </button>
+        <button class="filter-icon">
+          <i class="ti ti-adjustments-horizontal"></i> Filter
         </button>
       </div>
     </div>
-  </div>
-  
-  <!-- Main Content Card -->
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-    <!-- DataTable container -->
-    <div class="overflow-x-auto">
-      <table id="categoryTable" class="w-full">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Parent</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th>Created Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Data will be loaded here -->
-        </tbody>
-      </table>
+
+    <!-- Active Filters -->
+    <div id="active-filters" class="active-filters">
     </div>
-    
-    <!-- Infinite Scroll Loader -->
-    <div id="infiniteScrollLoader" class="infinite-scroll-loader">
-      <div class="spinner"></div>
-      <p class="mt-2 text-sm text-gray-500">Loading more items...</p>
-    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+      
+      <!-- Data Table -->
+      <div id="example-table" class="w-full"></div>
+
+    <!-- Search Suggestions Dropdown (hidden initially) -->
+    <div id="search-suggestions" class="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg hidden mt-1 w-64 max-h-60 overflow-auto"></div>
   </div>
 </div>
-
-<!-- Create/Edit Modal -->
-<div id="categoryModal" class="modal-overlay hidden">
-  <div class="modal-content">
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 id="modalTitle" class="text-xl font-bold text-gray-800 dark:text-white">Add New Category</h3>
-        <button id="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none">
-          <i class="ri-close-line text-2xl"></i>
-        </button>
-      </div>
-      
-      <form id="categoryForm">
-        <input type="hidden" id="categoryId">
-        
-        <div class="mb-4">
-          <label for="categoryName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name</label>
-          <input type="text" id="categoryName" name="name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        </div>
-        
-        <div class="mb-4">
-          <label for="parentCategory" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parent Category</label>
-          <select id="parentCategory" name="parent" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">None (Top Level)</option>
-            <!-- Parent options will be loaded dynamically -->
-          </select>
-        </div>
-        
-        <div class="mb-4">
-          <label for="categoryDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-          <textarea id="categoryDescription" name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-        </div>
-        
-        <div class="mb-4">
-          <label for="categoryStatus" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-          <select id="categoryStatus" name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="archived">Archived</option>
-          </select>
-        </div>
-        
-        <div class="flex justify-end mt-6">
-          <button type="button" id="cancelBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium px-4 py-2 rounded-lg mr-2">
-            Cancel
-          </button>
-          <button type="submit" id="saveBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center">
-            <i class="ri-save-line mr-2"></i> Save Category
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="modal-overlay hidden">
-  <div class="modal-content" style="max-width: 400px;">
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Confirm Delete</h3>
-        <button class="closeDeleteModal text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none">
-          <i class="ri-close-line text-2xl"></i>
-        </button>
-      </div>
-      
-      <p class="text-gray-600 dark:text-gray-400 mb-6">Are you sure you want to delete <span id="deleteCategoryName" class="font-semibold"></span>? This action cannot be undone.</p>
-      
-      <div class="flex justify-end">
-        <button class="closeDeleteModal bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium px-4 py-2 rounded-lg mr-2">
-          Cancel
-        </button>
-        <button id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg flex items-center">
-          <i class="ri-delete-bin-line mr-2"></i> Delete
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Advanced Filters Modal -->
-<div id="filtersModal" class="modal-overlay hidden">
-  <div class="modal-content">
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Advanced Filters</h3>
-        <button class="closeFiltersModal text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none">
-          <i class="ri-close-line text-2xl"></i>
-        </button>
-      </div>
-      
-      <form id="advancedFilterForm">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-          <div class="flex flex-wrap gap-2">
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="status" value="active" class="form-checkbox h-5 w-5 text-blue-600">
-              <span class="ml-2 text-gray-700 dark:text-gray-300">Active</span>
-            </label>
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="status" value="inactive" class="form-checkbox h-5 w-5 text-blue-600">
-              <span class="ml-2 text-gray-700 dark:text-gray-300">Inactive</span>
-            </label>
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="status" value="archived" class="form-checkbox h-5 w-5 text-blue-600">
-              <span class="ml-2 text-gray-700 dark:text-gray-300">Archived</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parent Category</label>
-          <select name="parent" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Any</option>
-            <option value="none">None (Top Level Only)</option>
-            <!-- Parent options will be loaded dynamically -->
-          </select>
-        </div>
-        
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Created Date</label>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">From</label>
-              <input type="date" name="createdFrom" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">To</label>
-              <input type="date" name="createdTo" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-          </div>
-        </div>
-        
-        <div class="flex justify-end mt-6">
-          <button type="button" id="resetFiltersBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium px-4 py-2 rounded-lg mr-2">
-            Reset
-          </button>
-          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center">
-            <i class="ri-filter-3-line mr-2"></i> Apply Filters
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Toast Notifications -->
-<div class="toast-container"></div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  $(document).ready(function() {
-    let table;
-    let activeFilters = {};
-    let currentPage = 1;
-    let isLoading = false;
-    let hasMoreData = true;
-    let pageSize = 20;
-    let selectedCategoryId = null;
-    
-    // Initialize DataTable
-    initializeDataTable();
-    
-    // Load initial data
-    loadCategories();
-    
-    // Populate parent category dropdowns
-    loadParentCategories();
-    
-    // Setup event handlers
-    setupEventHandlers();
-    
-    // Initialize DataTable
-    function initializeDataTable() {
-      table = $('#categoryTable').DataTable({
-        processing: true,
-        serverSide: false, // We'll handle server-side processing manually
-        paging: false, // We'll handle pagination with infinite scroll
-        searching: false, // We'll handle searching manually
-        ordering: true,
-        info: false,
-        scrollY: '60vh',
-        scrollCollapse: true,
-        dom: 'Bfrtip', // Buttons, filter, processing, table, pagination
-        buttons: [
-          {
-            extend: 'collection',
-            text: '<i class="ri-download-2-line mr-1"></i> Export',
-            className: 'bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg ml-2',
-            buttons: [
-              {
-                extend: 'excel',
-                text: '<i class="ri-file-excel-2-line mr-2"></i> Excel',
-                exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
-              },
-              {
-                extend: 'csv',
-                text: '<i class="ri-file-text-line mr-2"></i> CSV',
-                exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
-              },
-              {
-                extend: 'pdf',
-                text: '<i class="ri-file-pdf-line mr-2"></i> PDF',
-                exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
-              },
-              {
-                extend: 'print',
-                text: '<i class="ri-printer-line mr-2"></i> Print',
-                exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
-              },
-              {
-                extend: 'copy',
-                text: '<i class="ri-clipboard-line mr-2"></i> Copy',
-                exportOptions: { columns: [0, 1, 2, 3, 4, 5] }
-              }
-            ]
-          }
-        ],
-        columns: [
-          { data: 'id' },
-          { 
-            data: 'name',
-            render: function(data, type, row) {
-              // Add indentation for hierarchy
-              let padding = row.level * 20;
-              return '<div style="padding-left: ' + padding + 'px">' + 
-                     (row.hasChildren ? '<i class="ri-folder-line mr-2 text-yellow-500"></i>' : '<i class="ri-file-list-line mr-2 text-blue-500"></i>') + 
-                     data + '</div>';
-            }
-          },
-          { 
-            data: 'parent',
-            render: function(data) {
-              return data ? data : '<span class="text-gray-400">-</span>';
-            }
-          },
-          { data: 'description' },
-          { 
-            data: 'status',
-            render: function(data) {
-              if (data === 'active') {
-                return '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>';
-              } else if (data === 'inactive') {
-                return '<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">Inactive</span>';
-              } else {
-                return '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Archived</span>';
-              }
-            }
-          },
-          { 
-            data: 'created_date',
-            render: function(data) {
-              return moment(data).format('MMM D, YYYY');
-            }
-          },
-          {
-            data: null,
-            orderable: false,
-            render: function(data, type, row) {
-              return `
-                <div class="flex space-x-2">
-                  <button class="btn-action btn-view view-category" data-id="${row.id}" title="View">
-                    <i class="ri-eye-line"></i>
-                  </button>
-                  <button class="btn-action btn-edit edit-category" data-id="${row.id}" title="Edit">
-                    <i class="ri-pencil-line"></i>
-                  </button>
-                  <button class="btn-action btn-delete delete-category" data-id="${row.id}" data-name="${row.name}" title="Delete">
-                    <i class="ri-delete-bin-line"></i>
-                  </button>
-                </div>
-              `;
-            }
-          }
-        ],
-        createdRow: function(row, data) {
-          // Add data attributes for row identification
-          $(row).attr('data-id', data.id);
-          $(row).attr('data-parent', data.parent_id || '');
+  $(document).ready(function () {
+    // Sample nested data
+    const tableDataNested = [
+      { name: 'Oli Bob', location: 'United Kingdom', gender: 'male', col: 'red', dob: '14/04/1984', _children: [
+        { name: 'Mary May', location: 'Germany', gender: 'female', col: 'blue', dob: '14/05/1982' },
+        { name: 'Christine Lobowski', location: 'France', gender: 'female', col: 'green', dob: '22/05/1982' },
+      ]},
+      { name: 'Jamie Newhart', location: 'India', gender: 'male', col: 'green', dob: '14/05/1985' },
+      { name: 'Gemma Jane', location: 'China', gender: 'female', col: 'red', dob: '22/05/1982', _children: [
+        { name: 'Emily Sykes', location: 'South Korea', gender: 'female', col: 'maroon', dob: '11/11/1970' },
+      ]},
+      { name: 'James Newman', location: 'Japan', gender: 'male', col: 'red', dob: '22/03/1998' }
+    ];
+
+    // Enhanced column definitions with modern formatting
+    const columnDefs = [
+      { 
+        title: 'Name', 
+        field: 'name', 
+        minWidth: 150, 
+        frozen: true, 
+        formatter: TableUtils.formatters.highlightFormatter,
+        headerFilter: true, // Aktifkan kolom pencarian
+      },
+      { 
+        title: 'Location', 
+        field: 'location', 
+        minWidth: 100, 
+        formatter: TableUtils.formatters.highlightFormatter,
+        headerFilter: true, // Aktifkan kolom pencarian
+      },
+      { 
+        title: 'Gender', 
+        field: 'gender', 
+        minWidth: 80, 
+        formatter: TableUtils.formatters.highlightFormatter,
+        headerFilter: true, // Aktifkan kolom pencarian
+      },
+      { 
+        title: 'Favourite Color', 
+        field: 'col', 
+        minWidth: 100, 
+        formatter: function(cell) {
+          const value = cell.getValue();
+          return `<div class="flex items-center">
+                    <span class="w-3 h-3 rounded-full mr-2" style="background-color:${value}"></span>
+                    ${TableUtils.formatters.highlightFormatter(cell)}
+                  </div>`;
         },
-        initComplete: function() {
-          // Add column menu toggles
-          this.api().columns().every(function(index) {
-            if (index < 6) { // Don't add to Actions column
-              const column = this;
-              const header = $(column.header());
-              
-              // Add three dots menu
-              const menuToggle = $('<span class="column-menu-toggle"><i class="ri-more-2-fill"></i></span>');
-              header.append(menuToggle);
-              
-              // Create column menu
-              const menu = $(`
-                <div class="column-menu">
-                  <div class="column-menu-item sort-asc">
-                    <i class="ri-sort-asc"></i> Sort Ascending
-                  </div>
-                  <div class="column-menu-item sort-desc">
-                    <i class="ri-sort-desc"></i> Sort Descending
-                  </div>
-                  <div class="column-menu-item filter-column">
-                    <i class="ri-filter-line"></i> Filter
-                  </div>
-                </div>
-              `);
-              
-              header.css('position', 'relative').append(menu);
-              
-              // Toggle menu on click
-              menuToggle.on('click', function(e) {
-                e.stopPropagation();
-                $('.column-menu').not(menu).hide();
-                menu.toggle();
-              });
-              
-              // Handle sorting
-              menu.find('.sort-asc').on('click', function() {
-                column.order('asc').draw();
-                menu.hide();
-              });
-              
-              menu.find('.sort-desc').on('click', function() {
-                column.order('desc').draw();
-                menu.hide();
-              });
-              
-              // Handle column filter
-              menu.find('.filter-column').on('click', function() {
-                const columnName = header.text().toLowerCase().trim();
-                showColumnFilterModal(columnName, index);
-                menu.hide();
-              });
-            }
-          });
-          
-          // Close menus when clicking outside
-          $(document).on('click', function() {
-            $('.column-menu').hide();
-          });
-        }
-      });
-      
-      // Adjust styling for DataTables buttons
-      $('.dt-buttons').addClass('mb-4');
-      $('.dt-button').addClass('mr-2');
-    }
-    
-    // Load categories from API
-    function loadCategories(append = false) {
-      if (isLoading || !hasMoreData) return;
-      
-      isLoading = true;
-      $('#infiniteScrollLoader').show();
-      
-      // In a real app, you would make an API call here
-      // For demo purposes, we'll simulate an API call with setTimeout
-      setTimeout(function() {
-        const mockData = generateMockData(currentPage, pageSize, activeFilters);
-        
-        if (mockData.length < pageSize) {
-          hasMoreData = false;
-        }
-        
-        if (append) {
-          // Append new data to existing data
-          table.rows.add(mockData).draw(false);
-        } else {
-          // Replace existing data
-          table.clear().rows.add(mockData).draw();
-        }
-        
-        currentPage++;
-        isLoading = false;
-        $('#infiniteScrollLoader').hide();
-        
-        if (!hasMoreData) {
-          $('#infiniteScrollLoader').html('<p class="text-sm text-gray-500 py-4">All items loaded</p>');
-        }
-      }, 800);
-    }
-    
-    // Generate mock data for demo
-    function generateMockData(page, pageSize, filters = {}) {
-      const data = [];
-      const startIndex = (page - 1) * pageSize;
-      
-      // Generate parent categories
-      for (let i = 0; i < 3; i++) {
-        const parentId = startIndex + i + 1;
-        
-        // Add parent
-        data.push({
-          id: parentId,
-          name: 'Category ' + parentId,
-          parent: null,
-          parent_id: null,
-          description: 'This is a top-level category',
-          status: ['active', 'inactive', 'archived'][Math.floor(Math.random() * 3)],
-          created_date: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
-          level: 0,
-          hasChildren: true
-        });
-        
-        // Add children
-        for (let j = 0; j < 2; j++) {
-          const childId = parentId * 100 + j + 1;
-          
-          data.push({
-            id: childId,
-            name: 'Subcategory ' + childId,
-            parent: 'Category ' + parentId,
-            parent_id: parentId,
-            description: 'This is a subcategory',
-            status: ['active', 'inactive'][Math.floor(Math.random() * 2)],
-            created_date: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
-            level: 1,
-            hasChildren: Math.random() > 0.5
-          });
-          
-          // Add grandchildren sometimes
-          if (Math.random() > 0.5) {
-            const grandchildId = childId * 100 + 1;
-            
-            data.push({
-              id: grandchildId,
-              name: 'Item ' + grandchildId,
-              parent: 'Subcategory ' + childId,
-              parent_id: childId,
-              description: 'This is an item in the subcategory',
-              status: 'active',
-              created_date: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
-                level: 2,
-                hasChildren: false
-            });
-            }
-            }
-            }
+        headerFilter: true, // Aktifkan kolom pencarian
+      },
+      { 
+        title: 'Date Of Birth', 
+        field: 'dob', 
+        hozAlign: 'center', 
+        sorter: 'date', 
+        minWidth: 100, 
+        formatter: TableUtils.formatters.highlightFormatter,
+        headerFilter: true, // Aktifkan kolom pencarian
+      },
+      { 
+        field: 'actions', 
+        formatter: TableUtils.formatters.actionsFormatter, 
+        width: 50, 
+        hozAlign: 'center', 
+        headerSort: false, 
+        cssClass: 'action-cell', 
+        frozen: true, 
+        headerFilter: false, // Nonaktifkan kolom pencarian untuk kolom aksi
+      }
+    ];
 
-            return data;
-            }
+    // Initialize table with enhanced options
+    const tableOptions = {
+      layout: "fitColumns",
+      responsiveLayout: "collapse",
+      placeholder: "No Data Available",
+      pagination: "local",
+      paginationSize: 10,
+      paginationSizeSelector: [5, 10, 25, 50],
+      movableColumns: true,
+      initialSort: [
+        {column: "name", dir: "asc"}
+      ]
+    };
 
-            // Load parent categories from API
-            function loadParentCategories() {
-            // In a real app, you would make an API call here
-            // For demo purposes, we'll simulate an API call with setTimeout
-            setTimeout(function() {
-            const mockData = generateParentCategories();
-            const parentCategorySelect = $('#parentCategory');
-                
-            mockData.forEach(function(category) {
-            parentCategorySelect.append(`<option value="${category.id}">${category.name}</option>`);
-            });
-            }, 500);
-            }
+    const tableManager = TableUtils.initializeSearchableTable('#example-table', tableDataNested, columnDefs, tableOptions);
 
-            // Generate mock parent categories for demo
-            function generateParentCategories() {
-            return [
-            { id: 1, name: 'Category 1' },
-            { id: 2, name: 'Category 2' },
-            { id: 3, name: 'Category 3' },
-            { id: 4, name: 'Category 4' },
-            { id: 5, name: 'Category 5' }
-            ];
-            }
+    // Fungsi untuk menampilkan/menyembunyikan kolom pencarian di header
+    $('#toggle-column-search').on('click', function() {
+      TableUtils.search.toggleColumnSearch('#example-table');
+    });
 
-            // Setup event handlers
-            function setupEventHandlers() {
-            // Handle infinite scroll
-            $(window).on('scroll', function() {
-            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
-            loadCategories(true);
-            }
-            });
+    // Event handlers for action buttons
+    $(document).on('click', '.edit-btn', function(e) {
+      e.preventDefault();
+      const id = $(this).data('id');
+      console.log('Edit button clicked for ID:', id);
+    });
 
-            // Handle global search
-            $('#globalSearch').on('input', function() {
-            table.search(this.value).draw();
-            });
+    $(document).on('click', '.delete-btn', function(e) {
+      e.preventDefault();
+      const id = $(this).data('id');
+      console.log('Delete button clicked for ID:', id);
+    });
 
-            // Handle advanced filters
-            $('#btnAdvancedFilters').on('click', function() {
-            $('#filtersModal').show();
-            });
-
-            $('#filtersModal').on('click', function(e) {
-            if (e.target === this) {
-            $(this).hide();
-            }
-            });
-
-            $('.closeFiltersModal').on('click', function() {
-            $('#filtersModal').hide();
-            });
-
-            $('#advancedFilterForm').on('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            activeFilters = {};
-            formData.forEach(function(value, key) {
-            if (value) {
-            if (!activeFilters[key]) {
-            activeFilters[key] = [];
-            }
-            activeFilters[key].push(value);
-            }
-            });
-
-            $('#filtersModal').hide();
-            currentPage = 1;
-            hasMoreData = true;
-            loadCategories();
-            });
-
-            $('#resetFiltersBtn').on('click', function() {
-            $('#advancedFilterForm')[0].reset();
-            activeFilters = {};
-            currentPage = 1;
-            hasMoreData = true;
-            loadCategories();
-            });
-
-            // Handle add category
-            $('#btnAddCategory').on('click', function() {
-            $('#categoryModal').show();
-            $('#modalTitle').text('Add New Category');
-            $('#categoryForm')[0].reset();
-            selectedCategoryId = null;
-            });
-
-            // Handle edit category
-            $('#categoryTable').on('click', '.edit-category', function() {
-            const categoryId = $(this).data('id');
-            const category = table.row(`[data-id="${categoryId}"]`).data();
-            $('#categoryModal').show();
-            $('#modalTitle').text('Edit Category');
-            $('#categoryForm')[0].reset();
-            $('#categoryId').val(categoryId);
-            $('#categoryName').val(category.name);
-            $('#parentCategory').val(category.parent_id);
-            $('#categoryDescription').val(category.description);
-            $('#categoryStatus').val(category.status);
-            selectedCategoryId = categoryId;
-            });
-
-            // Handle view category
-            $('#categoryTable').on('click', '.view-category', function() {
-            const categoryId = $(this).data('id');
-            const category = table.row(`[data-id="${categoryId}"]`).data();
-            $('#categoryModal').show();
-            $('#modalTitle').text('View Category');
-            $('#categoryForm')[0].reset();
-            $('#categoryName').val(category.name).prop('readonly', true);
-            $('#parentCategory').val(category.parent_id).prop('disabled', true);
-            $('#categoryDescription').val(category.description).prop('readonly', true);
-            $('#categoryStatus').val(category.status).prop('disabled', true);
-            $('#saveBtn').hide();
-            selectedCategoryId = categoryId;
-            });
-
-            // Handle delete category
-            $('#categoryTable').on('click', '.delete-category', function() {
-            const categoryId = $(this).data('id');
-            const categoryName = $(this).data('name');
-            $('#deleteModal').show();
-            $('#deleteCategoryName').text(categoryName);
-            selectedCategoryId = categoryId;
-            });
-
-            $('#deleteModal').on('click', function(e) {
-            if (e.target === this) {
-            $(this).hide();
-            }
-            });
-
-            $('.closeDeleteModal').on('click', function() {
-            $('#deleteModal').hide();
-            });
-
-            $('#confirmDeleteBtn').on('click', function() {
-            // In a real app, you would make an API call here
-            // For demo purposes, we'll just remove the row from the table
-            table.row(`[data-id="${selectedCategoryId}"]`).remove().draw();
-            $('#deleteModal').hide();
-            });
-
-            // Handle save category
-            $('#categoryForm').on('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const category = {};
-            formData.forEach(function(value, key) {
-            category[key] = value;
-            });
-
-            if (selectedCategoryId) {
-            // In a real app, you would make an API call here
-            // For demo purposes, we'll just update the row in the table
-            const row = table.row(`[data-id="${selectedCategoryId}"]`);
-            const rowData = row.data();
-            row.data({
-            ...rowData,
-            name: category.name,
-            parent: $('#parentCategory option:selected').text(),
-            parent_id: category.parent,
-            description: category.description,
-            status: category.status
-            }).draw();
-            } else {
-            // In a real app, you would make an API call here
-            // For demo purposes, we'll just add a new row to the table
-            const newRow = {
-            id: Math.floor(Math.random() * 1000) + 1000,
-            name: category.name,
-            parent: $('#parentCategory option:selected').text(),
-            parent_id: category.parent,
-            description: category.description,
-            status: category.status,
-            created_date: new Date(),
-            level: 0,
-            hasChildren: false
-            };
-            table.row.add(newRow).draw();
-            }
-
-            $('#categoryModal').hide();
-            });
-
-            // Handle close modal
-            $('#closeModal').on('click', function() {
-            $('#categoryModal').hide();
-            });
-
-            $('#cancelBtn').on('click', function() {
-            $('#categoryModal').hide();
-            });
-            }
-
-            // Show column filter modal
-            function showColumnFilterModal(columnName, columnIndex) {
-            const columnFilterModal = $(`
-            <div class="modal-overlay">
-              <div class="modal-content" style="max-width: 300px;">
-                <div class="p-6">
-                  <h3 class="text-xl font-bold text-gray-800 dark:text-white">Filter ${columnName}</h3>
-                  <div class="mt-4">
-                    <input type="text" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search ${columnName}...">
-                  </div>
-                  <div class="mt-4">
-                    <div class="filter-chip">Active <span class="close">×</span></div>
-                    <div class="filter-chip">Inactive <span class="close">×</span></div>
-                    <div class="filter-chip">Archived <span class="close">×</span></div>
-                  </div>
-                  <div class="flex justify-end mt-6">
-                    <button class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium px-4 py-2 rounded-lg mr-2">
-                      Cancel
-                    </button>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center">
-                      <i class="ri-filter-3-line mr-2"></i> Apply
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            `);
-
-            columnFilterModal.find('.close').on('click', function() {
-            $(this).parent().remove();
-            });
-
-            columnFilterModal.on('click', function(e) {
-            if (e.target === this) {
-            $(this).remove();
-            }
-            });
-
-            $('body').append(columnFilterModal);
-            }
-
-            // Show toast notification
-            function showToast(title, message, type = 'info') {
-            const toast = $(`
-            <div class="toast toast-${type}">
-              <div class="toast-icon
-            ${type === 'success' ? 'text-green-500' : type === 'error' ? 'text-red-500' : type === 'warning' ? 'text-yellow-500' : 'text-blue-500'}">
-                ${type === 'success' ? '<i class="ri-checkbox-circle-line"></i>' : type === 'error' ? '<i class="ri-error-warning-line"></i>' : type === 'warning' ? '<i class="ri-alert-line"></i>' : '<i class="ri-information-line"></i>'}
-                </div>
-                <div class="toast-body
-            ">
-                <div class="toast-title">${title}</div>
-                <div class="toast-message">${message}</div>
-                </div>
-                <div class="toast-close">×</div>
-                </div>
-                `);
-
-                $('.toast-container').append(toast);
-
-                setTimeout(function() {
-                toast.addClass('show');
-                }, 100);
-
-                toast.find('.toast-close').on('click', function() {
-                toast.removeClass('show');
-                setTimeout(function() {
-                toast.remove();
-                }, 300);
-                });
-                }
-
-                // Generate random date between two dates
-                function randomDate(start, end) {
-                return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-                }
-                });
-                </script>
-                {% endblock %}
+    // Filter tag removal functionality
+    $(document).on('click', '.filter-tag .close-btn', function() {
+      $(this).parent().remove();
+    });
+  });
+</script>
+{% endblock %}
