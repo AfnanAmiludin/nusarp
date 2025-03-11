@@ -9,6 +9,7 @@ from django.http import QueryDict
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,49 @@ def format_items(level_dict, level_items):
 
 
 class FormatViewSet(ModelViewSet):
+    
+    @property
+    def cache_key(self):
+        return f"{self.__class__.__name__}_queryset"
+
+    def list(self, request, *args, **kwargs):
+        cached_data = cache.get(self.cache_key)
+        if cached_data:
+            return Response(cached_data)
+
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        cache.set(self.cache_key, serializer.data, timeout=3600)
+        return Response(serializer.data)
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            cache.delete(self.cache_key)
+            return Response(
+                {"message": "Created successfully!", "data": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            {"message": "Failed to create", "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            cache.delete(self.cache_key)
+            return Response(
+                {"message": "Updated successfully!", "data": serializer.data},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            {"message": "Failed to update", "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     def _grouped_list(self, groups, queryset, request):
         require_group_count = request.query_params.get('requireGroupCount')
@@ -100,33 +144,3 @@ class FormatViewSet(ModelViewSet):
             return group['selector'].replace('.', '__') + '__' + group['groupInterval']
         else:
             return group['selector'].replace('.', '__')
-
-
-# import json
-# import logging
-# import sys
-# from collections import OrderedDict
-
-# from django.db import models
-# from django.db.models import Count
-# from django.http import QueryDict
-# from rest_framework import status
-# from rest_framework.response import Response
-# from rest_framework.viewsets import ModelViewSet
-
-# logger = logging.getLogger(__name__)
-
-
-# class FormatViewSet(ModelViewSet):
-
-#     def _not_grouped_list(self, queryset, request):
-#         return [self.serializer_class(perm, context={'request': request}).data for perm in queryset]
-    
-#     def _grouped_list(self, group, queryset, request):
-#         grouped_data = {}
-#         for perm in queryset:
-#             category = getattr(perm, group, 'Other')
-#             grouped_data.setdefault(category, []).append(
-#                 self.serializer_class(perm, context={'request': request}).data
-#             )
-#         return grouped_data
