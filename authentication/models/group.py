@@ -5,18 +5,19 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from authentication import settings
-from core.models import Base, History, Tracker, AdjacencyListTree
+from core.models import Base, History, Tracker, SchemaView, Trigrams, FullOptimizer, IndexOptimizer
 
 logger = logging.getLogger(__name__)
 
-
-class Groups(AdjacencyListTree, Base, Group, ):
-    node_order_by = ['id', ]
-    inheritance_group = models.OneToOneField(
-        to=Group,
-        on_delete=models.CASCADE,
-        parent_link=True,
+class Group(Base):
+    group_id = models.CharField(
         primary_key=True,
+        verbose_name=_('group id'),
+        help_text=_('Used for identity for group'),
+    )
+    group_name = models.CharField(
+        verbose_name=_('group name'),
+        help_text=_('Used for view'),
     )
     parent = models.ForeignKey(
         to='self',
@@ -39,6 +40,9 @@ class Groups(AdjacencyListTree, Base, Group, ):
         verbose_name=_('Used store history group'),
         excluded_fields=['modified', ],
     )
+    schema_view = SchemaView(schema='authentication')
+    trigrams = Trigrams()
+    indexes = IndexOptimizer()
 
     class Meta:
         managed = True
@@ -60,9 +64,9 @@ class Groups(AdjacencyListTree, Base, Group, ):
         return len(self.get_children()) > 0
 
 
-class GroupsPermission(models.Model, ):
+class GroupPermission(models.Model, ):
     group = models.ForeignKey(
-        to=Groups,
+        to=Group,
         on_delete=models.DO_NOTHING,
     )
     permission = models.ForeignKey(

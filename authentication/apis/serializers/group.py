@@ -3,42 +3,36 @@ import logging
 from django.contrib import auth
 from authentication.models import Group
 from library.restframeworkflexfields import FlexFieldsModelSerializer
+from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 
 User = auth.get_user_model()
 
 
-class GroupSerializer(FlexFieldsModelSerializer, ):
+class GroupSerializer(FlexFieldsModelSerializer):
+    children = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
         fields = [
-            'base64pk',
-            'id',
-            'name',
+            'group_id',
+            'group_name',
             'parent',
-            'derivative_permission',
-            'permissions',
+            'status',
             'created',
             'modified',
-            'read_only',
-            'enable',
-            'properties',
-            'description',
-            'has_children',
-            'is_removed',
+            'children',
         ]
-        extra_kwargs = {
-            'base64pk': {'required': False, },
-            'id': {'required': False, },
-            'permissions': {'required': False, 'read_only': True, },
-            'is_removed': {'required': False, },
-        }
         expandable_fields = {
-            'parent': (
-                'authentication.apis.serializers.GroupSerializer', {'many': False, },
-            ),
-            'permissions': (
-                'authentication.apis.serializers.PermissionSerializer', {'many': True, },
-            ),
+            'parent': ('authentication.apis.serializers.group.GroupSerializer', {'many': False}),
         }
+        read_only_fields = ['created', 'modified']
+        extra_kwargs = {
+            'group_id': {'read_only': True},
+        }
+
+    def get_children(self, obj):
+        children = Group.objects.filter(parent=obj)
+        return GroupSerializer(children, many=True).data
+        

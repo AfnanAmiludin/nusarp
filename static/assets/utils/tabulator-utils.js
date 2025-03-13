@@ -40,15 +40,72 @@ AppUtils.TableUtils = {
     };
   },
 
-  // Formatters for cells
-  formatters: {
+  // Add to the AppUtils.TableUtils object
+  loadingOverlay: {
     /**
-     * Custom formatter that highlights search matches
-     * @param {CellComponent} cell - The cell component
-     * @param {Object} formatterParams - The formatter parameters
-     * @param {Function} onRendered - Callback function when rendering is complete
-     * @returns {string} - The formatted cell value
+     * Show loading overlay on a table container
+     * @param {string} tableSelector - CSS selector for the table container
+     * @param {string} message - Optional loading message
      */
+    show: function(tableSelector, message = 'Loading data...') {
+      const container = document.querySelector(tableSelector);
+      if (!container) return;
+      
+      // Create overlay if it doesn't exist
+      let overlay = container.querySelector('.table-loading-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'table-loading-overlay';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        
+        // Create dots for the pulse animation
+        for (let i = 0; i < 3; i++) {
+          const dot = document.createElement('div');
+          dot.className = 'dot';
+          spinner.appendChild(dot);
+        }
+        
+        const messageElem = document.createElement('div');
+        messageElem.className = 'loading-message';
+        
+        overlay.appendChild(spinner);
+        overlay.appendChild(messageElem);
+        container.appendChild(overlay);
+      }
+      
+      // Update message
+      overlay.querySelector('.loading-message').textContent = message;
+      
+      // Show overlay with fade-in
+      overlay.style.display = 'flex';
+      setTimeout(() => {
+        overlay.style.opacity = '1';
+      }, 10);
+    },
+    
+    /**
+     * Hide loading overlay
+     * @param {string} tableSelector - CSS selector for the table container
+     */
+    hide: function(tableSelector) {
+      const container = document.querySelector(tableSelector);
+      if (!container) return;
+      
+      const overlay = container.querySelector('.table-loading-overlay');
+      if (overlay) {
+        // Fade out then hide
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 300);
+      }
+    }
+  },
+
+  // Formatters remain the same
+  formatters: {
     highlightFormatter: function(cell, formatterParams, onRendered) {
       let value = cell.getValue();
       
@@ -64,8 +121,7 @@ AppUtils.TableUtils = {
       if (!hasActiveFilters && !currentSearchTerm) {
         return value; // Return original value without highlighting
       }
-      
-      // Apply highlighting for active filters
+
       if (hasActiveFilters) {
         Object.values(searchState.groupedFilters).forEach((filter) => {
           filter.values.forEach((term) => {
@@ -127,114 +183,109 @@ AppUtils.TableUtils = {
   // Search utilities
   search: {
     /**
-     * Find all matching column values for the current search term
-     * @param {Array} tableData - The table data array
+     * Find matching values via AJAX
      * @param {string} searchValue - The search term
      * @param {Array} searchableColumns - The searchable column definitions
-     * @returns {Array} - The matched values for each column
+     * @param {Object} ajaxConfig - AJAX configuration for search suggestions
+     * @returns {Promise} - Promise resolving to matching values
      */
-    findMatchingValues: function(tableData, searchValue, searchableColumns) {
-      if (!searchValue) return [];
-
-      const results = [];
-      searchValue = searchValue.toLowerCase();
-
-      // Check each searchable column
-      searchableColumns.forEach((column) => {
-        const field = column.field;
-        const title = column.title;
-
-        // Collect all unique values that match the search
-        const matchingValues = new Set();
-
-        // Function to check values recursively
-        function checkData(data) {
-          if (
-            data[field] &&
-            typeof data[field] === 'string' &&
-            data[field].toLowerCase().includes(searchValue)
-          ) {
-            matchingValues.add(data[field]);
-          }
-
-          // Check children if any
-          if (data._children && data._children.length) {
-            data._children.forEach((child) => checkData(child));
-          }
+    findMatchingValues: function(searchValue, searchableColumns, ajaxConfig) {
+      return new Promise((resolve, reject) => {
+        if (!searchValue) {
+          resolve([]);
+          return;
         }
-
-        // Process all rows
-        tableData.forEach((row) => checkData(row));
-
-        // Add all matches to results
-        matchingValues.forEach((value) => {
-          results.push({
-            field,
-            title,
-            value,
-          });
+    
+        // Gunakan AJAX untuk mengambil saran
+        $.ajax({
+          url: ajaxConfig.suggestionUrl || ajaxConfig.ajaxURL,
+          method: ajaxConfig.ajaxConfig || 'POST',
+          data: {
+            ...ajaxConfig.ajaxParams,
+            search: searchValue,
+            columns: searchableColumns.map(col => col.field)
+          },
+          success: function(response) {
+            console.log(response.results);
+    
+            // Menghasilkan array saran berdasarkan hasil response
+            const suggestions = response.results.map(item => {
+              let itemSuggestions = [];
+    
+              // Iterasi setiap kolom yang dapat dicari
+              searchableColumns.forEach(column => {
+                const field = column.field;
+                const title = column.title;
+                const value = item[field];
+    
+                // Jika nilai ada, tipe data string, dan mengandung searchValue (case-insensitive)
+                if (value && typeof value === 'string' && value.toLowerCase().includes(searchValue.toLowerCase())) {
+                  itemSuggestions.push({
+                    field,
+                    title,
+                    value
+                  });
+                }
+              });
+    
+              // Kembalikan item suggestions jika ada yang cocok
+              return itemSuggestions;
+            });
+    
+            // Ratakan array of array menjadi satu array
+            const results = suggestions.flat();
+    
+            // Kirim hasil yang sudah dipetakan
+            resolve(results);
+          },
+          error: function(xhr, status, error) {
+            console.error('Search suggestions error:', error);
+            resolve([]);  // Kembalikan array kosong jika terjadi kesalahan
+          }
         });
       });
-
-      return results;
-    },
+    },    
 
     /**
-     * Check if a row or any of its children match the filter
-     * @param {RowComponent} row - The table row component 
+     * Check if a row matches filter via server-side logic
+     * @param {Object} rowData - The row data
      * @param {Object} filters - The grouped filter object
-     * @returns {boolean} - Whether the row matches the filters
+     * @returns {Promise} - Promise resolving to match result
      */
-    rowMatchesFilter: function(row, filters) {
-      // Get the full row data, including nested data
-      let rowData = row.getData();
-
-      // Check if current row matches filters
-      let directMatch = Object.keys(filters).every((field) => {
-        const values = filters[field].values;
-        return values.some(
-          (value) =>
-            rowData[field] &&
-            typeof rowData[field] === 'string' &&
-            rowData[field].toLowerCase().includes(value.toLowerCase())
-        );
-      });
-
-      if (directMatch) return true;
-
-      // If not a direct match, check children recursively
-      function checkChildren(data) {
-        // Check if current data matches filters
-        let childMatch = Object.keys(filters).every((field) => {
-          const values = filters[field].values;
-          return values.some(
-            (value) =>
-              data[field] &&
-              typeof data[field] === 'string' &&
-              data[field].toLowerCase().includes(value.toLowerCase())
-          );
-        });
-
-        if (childMatch) return true;
-
-        // Recursively check nested children
-        if (data._children && data._children.length) {
-          return data._children.some((child) => checkChildren(child));
+    rowMatchesFilter: function(rowData, filters) {
+      return new Promise((resolve, reject) => {
+        if (Object.keys(filters).length === 0) {
+          resolve(true);
+          return;
         }
 
-        return false;
-      }
+        // Prepare filter parameters for server-side check
+        const filterParams = Object.keys(filters).map(field => ({
+          field,
+          values: filters[field].values
+        }));
 
-      // Check children of the current row
-      if (rowData._children && rowData._children.length) {
-        return rowData._children.some((child) => checkChildren(child));
-      }
-
-      return false;
+        $.ajax({
+          url: AppUtils.TableUtils.currentTableConfig?.ajaxURL,
+          method: 'POST',
+          data: {
+            ...AppUtils.TableUtils.currentTableConfig?.ajaxParams,
+            rowData: rowData,
+            filters: filterParams
+          },
+          success: function(response) {
+            resolve(response.results.match || false);
+          },
+          error: function(xhr, status, error) {
+            console.error('Row match filter error:', error);
+            resolve(false);
+          }
+        });
+      });
     },
 
     /**
-     * Add a filter value to a grouped filter
+     * Add a filter value
      * @param {string} field - The field name
      * @param {string} value - The filter value
      * @param {string} title - The filter title/label
@@ -253,7 +304,7 @@ AppUtils.TableUtils = {
 
       // Check if value already exists in this group
       if (searchState.groupedFilters[field].values.includes(value)) {
-        return; // Skip if already exists
+        return searchState.groupedFilters;
       }
 
       // Add value to group
@@ -272,7 +323,7 @@ AppUtils.TableUtils = {
       
       // Check if filter group exists
       if (!searchState.groupedFilters[field]) {
-        return;
+        return searchState.groupedFilters;
       }
     
       // Remove value from group
@@ -289,10 +340,8 @@ AppUtils.TableUtils = {
     },
 
     /**
-     * Show or hide column filters
+     * Toggle column search visibility
      * @param {string} tableSelector - The CSS selector for the table container
-     * @returns {void}
-     * @example AppUtils.TableUtils.toggleColumnSearch('#my-table');
      */
     toggleColumnSearch: function(tableSelector) {
       const table = Tabulator.findTable(tableSelector)[0];
@@ -317,9 +366,6 @@ AppUtils.TableUtils = {
     /**
      * Enhance filter inputs with search icon
      * @param {string} tableSelector - The CSS selector for the table container
-     * @returns {void}
-     * @example AppUtils.TableUtils.enhanceFilterInputs('#my-table');
-     * @description Enhances the filter inputs with a search icon and custom styles
      */
     enhanceFilterInputs: function(tableSelector) {
       const table = Tabulator.findTable(tableSelector)[0];
@@ -356,14 +402,20 @@ AppUtils.TableUtils = {
   },
 
   /**
-   * Initialize a table with searchable functionality
+   * Initialize a table with searchable functionality using AJAX
    * @param {string} tableSelector - The CSS selector for the table container
-   * @param {Array} tableData - The table data array 
    * @param {Array} columnDefs - The column definitions
    * @param {Object} options - Additional table options
    * @returns {Object} - The initialized table object and related methods
    */
-  initializeSearchableTable: function(tableSelector, tableData, columnDefs, options) {
+  initializeSearchableTable: function(tableSelector, columnDefs, options = {}) {
+
+    // Make sure the table container has position relative for proper overlay positioning
+    const container = document.querySelector(tableSelector);
+    if (container) {
+      container.style.position = 'relative';
+    }
+
     // Store DOM elements
     const elements = {
       tableContainer: document.querySelector(tableSelector),
@@ -372,8 +424,14 @@ AppUtils.TableUtils = {
       activeFiltersContainer: document.querySelector(AppUtils.TableUtils.selectors.activeFiltersContainer),
       searchSuggestions: document.querySelector(AppUtils.TableUtils.selectors.searchSuggestions)
     };
+
+    const searchConfig = {
+      minCharacters: 3,         // Minimum characters before auto-search
+      autoSearchDelay: 2000,    // Auto-search delay in ms (2 seconds)
+      typingIndicatorDelay: 500 // Show typing indicator after 500ms
+    };
     
-    // Default options
+    // Default options with AJAX configuration
     const defaultOptions = {
       dataTree: true,
       dataTreeChildIndent: 20,
@@ -383,14 +441,38 @@ AppUtils.TableUtils = {
       rowHeight: AppUtils.TableUtils.config.rowHeight,
       dataTreeExpandElement: "<span class='mr-2'><i class='ti ti-chevron-right'></i></span>",
       dataTreeCollapseElement: "<span class='mr-2'><i class='ti ti-chevron-down'></i></span>",
-      dataTreeChildColumnCalcs: false
+      dataTreeChildColumnCalcs: false,
+      
+      // AJAX Configuration
+      ajaxURL: options.ajaxURL || '', // Required: URL to fetch data
+      ajaxParams: options.ajaxParams || {}, // Optional: Additional parameters
+      ajaxConfig: options.ajaxConfig || 'POST', // HTTP method
+      ajaxFiltering: true, // Enable server-side filtering
+      ajaxSorting: true, // Enable server-side sorting
+      ajaxProgressiveLoad: options.ajaxProgressiveLoad || false, // Optional: Progressive loading
+      
+      // Pagination
+      pagination: options.pagination !== undefined ? options.pagination : true,
+      paginationSize: options.paginationSize || 10,
+      paginationMode: options.paginationMode || 'remote', // Server-side pagination
+    };
+    
+    // Store current table configuration globally for use in other methods
+    AppUtils.TableUtils.currentTableConfig = {
+      ...defaultOptions,
+      ...options
     };
     
     // Merge default options with provided options
-    const tableOptions = {...defaultOptions, ...options, data: tableData, columns: columnDefs};
-    
+    const tableOptions = {
+      ...defaultOptions, 
+      columns: columnDefs,
+      ...options // Spread last to allow override of any previous settings
+    };
+
     // Create the table
-    const table = new Tabulator(tableSelector, tableOptions);
+    AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Initializing table...');
+    const table = new Tabulator(tableSelector, {...tableOptions});
     
     // Define searchable columns - exclude actions
     const searchableColumns = columnDefs.filter(col => col.field !== 'actions');
@@ -411,413 +493,567 @@ AppUtils.TableUtils = {
     }
     
     /**
-     * Show search suggestions
+     * Show search suggestions with additional indicators
      * @param {string} searchValue - The current search value
+     * @param {string} [indicatorType] - Type of indicator to show: 'typing', 'searching', 'error', or null
+     * @param {string} [indicatorMessage] - Custom message for the indicator
      */
-    function showSuggestions(searchValue) {
-      const results = AppUtils.TableUtils.search.findMatchingValues(tableData, searchValue, searchableColumns);
-
+    function showSuggestions(searchValue, indicatorType = null, indicatorMessage = null) {
       // Clear previous suggestions
       $(elements.searchSuggestions).empty();
-
-      if (results.length > 0) {
-        // Group results by column
-        const groupedResults = {};
-        results.forEach((result) => {
-          if (!groupedResults[result.field]) {
-            groupedResults[result.field] = [];
-          }
-          groupedResults[result.field].push(result);
-        });
-
-        // Add column headers and values
-        Object.keys(groupedResults).forEach((field) => {
-            const fieldResults = groupedResults[field];
-            const columnTitle = fieldResults[0].title;
-  
-            // Add column header
-            $(elements.searchSuggestions).append(`
-              <div class="px-3 py-1 text-xs text-gray-500 bg-gray-100">${columnTitle}</div>
-            `);
-  
-            // Add values
-            fieldResults.forEach((result) => {
-              $(elements.searchSuggestions).append(`
-                <div class="suggestion-item px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                    data-field="${result.field}"
-                    data-value="${result.value}"
-                    data-title="${result.title}">
-                  <span class="search-highlight">${result.value}</span>
+      
+      // If there's an indicator to show, add it first
+      if (indicatorType) {
+        let indicatorHTML = '';
+        
+        switch (indicatorType) {
+          case 'typing':
+            indicatorHTML = `
+              <div class="search-typing-indicator px-3 py-2 text-xs text-gray-500 flex items-center">
+                <i class="ti ti-clock-hour-4 mr-1"></i>${indicatorMessage || `Pencarian otomatis dalam ${searchConfig.autoSearchDelay/1000} detik...`}
+              </div>
+            `;
+            break;
+          case 'searching':
+            indicatorHTML = `
+              <div class="search-loading-indicator px-3 py-2 text-xs text-blue-600 flex items-center">
+                <i class="ti ti-loader mr-1 animate-spin"></i>${indicatorMessage || 'Mencari...'}
+              </div>
+            `;
+            break;
+          case 'error':
+            indicatorHTML = `
+              <div class="search-error-indicator px-3 py-2 text-xs text-red-500 flex items-center">
+                <i class="ti ti-alert-circle mr-1"></i>${indicatorMessage || 'Terjadi kesalahan'}
+              </div>
+            `;
+            break;
+          case 'min-chars':
+            indicatorHTML = `
+              <div class="search-min-chars-indicator px-3 py-2 text-xs text-amber-500 flex items-center">
+                <i class="ti ti-letter-case mr-1"></i>${indicatorMessage || `Minimal ${searchConfig.minCharacters} karakter untuk pencarian`}
+              </div>
+            `;
+            break;
+        }
+        
+        $(elements.searchSuggestions).append(indicatorHTML);
+        $(elements.searchSuggestions).removeClass('hidden');
+        positionSuggestions();
+      }
+    }
+    
+    /**
+     * Update filter badges
+     */
+    function updateFilterBadges() {
+      const searchState = AppUtils.TableUtils.searchState;
+      
+      // Clear existing badges
+      $(elements.activeFiltersContainer).empty();
+      
+      // Only add content if there are filters
+      if (Object.keys(searchState.groupedFilters).length > 0) {
+        // Add the "Search:" label with a red Clear All badge
+        const searchLabelHtml = `
+          <div class="flex items-center">
+            <span class="font-medium text-gray-600 mr-2">Search:</span>
+            <button id="clear-all-filters" class="bg-red-500 text-white hover:bg-red-600 text-xs ml-1 flex items-center px-2 py-1 rounded">
+              <i class="ti ti-trash mr-1"></i>Clear All
+            </button>
+          </div>
+        `;
+        $(elements.activeFiltersContainer).append(searchLabelHtml);
+        
+        // Create badge for each filter group
+        Object.values(searchState.groupedFilters).forEach((filter) => {
+          if (filter.values.length > 0) {
+            // Create badge with all values
+            const badgeHtml = `
+              <div class="filter-tag inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs ml-2">
+                <span class="font-medium mr-1">${filter.title}:</span>
+                <div class="flex flex-wrap items-center">
+                  ${filter.values
+                    .map(
+                      (value, index) => `
+                    <div class="flex items-center mr-1 last:mr-0">
+                      <span>${value}</span>
+                      <button class="remove-filter ml-1 text-blue-800 hover:text-blue-600"
+                             data-field="${filter.field}"
+                             data-value="${value}">
+                        <i class="ti ti-circle-x"></i>
+                      </button>
+                      ${index < filter.values.length - 1 ? '<span class="mx-1">|</span>' : ''}
+                    </div>
+                  `
+                    )
+                    .join('')}
                 </div>
-              `);
+              </div>
+            `;
+    
+            $(elements.activeFiltersContainer).append(badgeHtml);
+          }
+        });
+      }
+    }
+    
+    /**
+     * Apply all active filters
+     */
+    function applyFilters() {
+      const searchState = AppUtils.TableUtils.searchState;
+      
+      // If no filters, reset everything
+      if (Object.keys(searchState.groupedFilters).length === 0) {
+        AppUtils.TableUtils.resetTableCompletely();
+        return;
+      }
+    
+      console.log(searchState.groupedFilters);
+      
+      // Show loading overlay
+      AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Filtering data...');
+      
+      // Prepare AJAX params for filtering
+      const filterParams = Object.keys(searchState.groupedFilters).map(field => {
+        const filterGroup = searchState.groupedFilters[field];
+        return {
+          field: filterGroup.field,
+          values: filterGroup.values
+        };
+      });
+    
+      console.log(filterParams);
+      
+      // Send AJAX request with filter parameters
+      $.ajax({
+        url: tableOptions.ajaxURL,
+        method: 'GET', // Use GET or POST depending on the API's requirements
+        data: {
+          ...tableOptions.ajaxParams,
+          filters: JSON.stringify(filterParams) // Send filter parameters as a JSON string
+        },
+        success: function(response) {
+          // Update table with new data from the server
+          table.setData(response.results);
+          // Hide loading overlay
+          AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+        },
+        error: function(xhr, status, error) {
+          console.error('Error fetching filtered data:', error);
+          // Hide loading overlay
+          AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+        }
+      });
+    }        
+    
+    /**
+     * Reset table completely
+     */
+    AppUtils.TableUtils.resetTableCompletely = function() {
+      const searchState = AppUtils.TableUtils.searchState;
+      
+      // Clear the search input
+      $(elements.searchInput).val('');
+      
+      // Hide the clear search button
+      $(elements.clearSearchBtn).addClass('hidden');
+      
+      // Clear all filters
+      searchState.groupedFilters = {};
+      
+      // Empty the active filters container
+      $(elements.activeFiltersContainer).empty();
+      
+      // Reset any applied column search filters (if any)
+      if (table) {
+        table.clearFilter();
+      }
+    
+      // Show loading overlay
+      AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Resetting data...');
+    
+      // Reload original data without filters
+      $.ajax({
+        url: tableOptions.ajaxURL,
+        method: 'GET',
+        data: tableOptions.ajaxParams,
+        success: function(response) {
+          // Reset the table data to original (no filters)
+          table.setData(response.results);
+          // Hide loading overlay
+          AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+        },
+        error: function(xhr, status, error) {
+          console.error('Error resetting the table:', error);
+          // Hide loading overlay
+          AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+        }
+      });
+    };
+    
+    /**
+     * Expand nodes that match the current filters
+     */
+    AppUtils.TableUtils.expandMatchingNodes = function() {
+      // For AJAX, this method might need server-side support
+      // Typically, you'd send the current filters to the server
+      // and get back information about which rows should be expanded
+      table.setData({
+        url: tableOptions.ajaxURL,
+        params: {
+          ...tableOptions.ajaxParams,
+          expandMatching: true,
+          filters: JSON.stringify(AppUtils.TableUtils.searchState.groupedFilters)
+        }
+      });
+    };
+    
+    /**
+     * Set up event listeners
+     */
+    function setupEventListeners() {
+      // Configuration for search behavior
+      const searchConfig = {
+        minCharacters: 3,         // Minimum characters before auto-search
+        autoSearchDelay: 2000,    // Auto-search delay in ms (2 seconds)
+        typingIndicatorDelay: 500 // Show typing indicator after 500ms
+      };
+
+      let searchTimeout;
+      let typingIndicatorTimeout;
+
+      // Handle input events - only for showing suggestions and typing indicator
+      $(elements.searchInput).on('input', function() {
+        const value = $(this).val();
+        AppUtils.TableUtils.searchState.currentSearchTerm = value;
+        
+        // Clear previous timeouts
+        clearTimeout(searchTimeout);
+        clearTimeout(typingIndicatorTimeout);
+        
+        if (value) {
+          $(elements.clearSearchBtn).removeClass('hidden');
+          
+          // Show suggestions based on input length
+          if (value.length >= searchConfig.minCharacters) {
+            // First show typing indicator in suggestions
+            showSuggestions(value, 'typing');
+            
+            // Set auto-search after delay
+            searchTimeout = setTimeout(() => {
+              // Update to searching indicator
+              showSuggestions(value, 'searching');
+              
+              // Perform actual search
+              performSearch(value);
+            }, searchConfig.autoSearchDelay);
+          } else {
+            // Show minimum character requirement
+            showSuggestions(value, 'min-chars');
+          }
+        } else {
+          // Hide suggestions and clear button if input is empty
+          $(elements.searchSuggestions).addClass('hidden');
+          $(elements.clearSearchBtn).addClass('hidden');
+        }
+      });
+
+      // Handle Enter key for immediate search
+      $(elements.searchInput).on('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          
+          const value = $(this).val();
+          
+          // Clear any pending search
+          clearTimeout(searchTimeout);
+          
+          // Perform search immediately if value exists and meets minimum length
+          if (value && value.length >= searchConfig.minCharacters) {
+            showSuggestions(value, 'searching');
+            performSearch(value);
+          } else if (value.length > 0 && value.length < searchConfig.minCharacters) {
+            // Show minimum character warning
+            showSuggestions(value, 'min-chars');
+          } else {
+            // Reset to original data if empty
+            $(elements.searchSuggestions).addClass('hidden');
+            table.setData({
+              url: tableOptions.ajaxURL,
+              params: tableOptions.ajaxParams
             });
+          }
+        } else if (e.key === 'Escape') {
+          // Clear any pending search
+          clearTimeout(searchTimeout);
+          
+          if ($(elements.searchSuggestions).is(':visible')) {
+            $(elements.searchSuggestions).addClass('hidden');
+          } else {
+            // Clear input but keep filters
+            $(this).val('');
+            $(elements.clearSearchBtn).addClass('hidden');
+          }
+        }
+      });
+
+      // Helper function for performing the search
+      function performSearch(value) {
+        // Show searching indicator immediately
+        showSuggestions(value, 'searching');
+        
+        // Show loading overlay
+        AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Searching data...');
+        
+        // Only proceed if we have sufficient characters
+        if (!value || value.length < searchConfig.minCharacters) {
+          showSuggestions(value, 'min-chars');
+          AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+          return;
+        }
+        
+        // Create the Ajax configuration
+        const searchParams = {
+          ...tableOptions.ajaxParams,
+          search: value
+        };
+      
+        // Use AJAX to fetch search suggestions
+        AppUtils.TableUtils.search.findMatchingValues(
+          value, 
+          searchableColumns, 
+          tableOptions
+        ).then(results => {
+          // Store the search term
+          AppUtils.TableUtils.searchState.currentSearchTerm = value;
+          
+          // Display results in the suggestion dropdown
+          displaySearchResults(value, results);
+          
+          // Hide loading overlay
+          AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+        }).catch(error => {
+          console.error('Error performing search:', error);
+          showSuggestions(value, 'error', 'Gagal memuat data');
+          
+          // Hide loading overlay
+          AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+        });
+      }
+
+      // New function to display search results without making another AJAX call
+      function displaySearchResults(searchValue, results) {
+        // Clear previous suggestions
+        $(elements.searchSuggestions).empty();
+        
+        if (results.length > 0) {
+          // Group results by column
+          const groupedResults = {};
+          
+          // Track unique values for each field
+          const uniqueValues = {};
+          
+          // Process results to extract unique values
+          results.forEach((result) => {
+            // Initialize field in tracking objects if not exist
+            if (!groupedResults[result.field]) {
+              groupedResults[result.field] = [];
+              uniqueValues[result.field] = new Set();
+            }
+            
+            // Only add the result if this value hasn't been seen before for this field
+            if (!uniqueValues[result.field].has(result.value)) {
+              uniqueValues[result.field].add(result.value);
+              groupedResults[result.field].push(result);
+            }
           });
-  
+
+          // Add column headers and unique values
+          Object.keys(groupedResults).forEach((field) => {
+            const fieldResults = groupedResults[field];
+            if (fieldResults.length > 0) {
+              const columnTitle = fieldResults[0].title;
+
+              // Add column header
+              $(elements.searchSuggestions).append(`
+                <div class="px-3 py-1 text-xs text-gray-500 bg-gray-100">${columnTitle}</div>
+              `);
+
+              // Add unique values
+              fieldResults.forEach((result) => {
+                $(elements.searchSuggestions).append(`
+                  <div class="suggestion-item px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      data-field="${result.field}"
+                      data-value="${result.value}"
+                      data-title="${result.title}">
+                    <span class="search-highlight">${result.value}</span>
+                  </div>
+                `);
+              });
+            }
+          });
+
           // Show suggestions
           $(elements.searchSuggestions).removeClass('hidden');
           positionSuggestions();
         } else {
-          $(elements.searchSuggestions).addClass('hidden');
-        }
-      }
-      
-      /**
-       * Update filter badges
-       */
-      function updateFilterBadges() {
-        const searchState = AppUtils.TableUtils.searchState;
-        
-        // Clear existing badges
-        $(elements.activeFiltersContainer).empty();
-        
-        // Only add content if there are filters
-        if (Object.keys(searchState.groupedFilters).length > 0) {
-          // Add the "Search:" label with a red Clear All badge
-          const searchLabelHtml = `
-            <div class="flex items-center">
-              <span class="font-medium text-gray-600 mr-2">Search:</span>
-              <button id="clear-all-filters" class="bg-red-500 text-white hover:bg-red-600 text-xs ml-1 flex items-center px-2 py-1 rounded">
-                <i class="ti ti-trash mr-1"></i>Clear All
-              </button>
+          // No results found
+          $(elements.searchSuggestions).append(`
+            <div class="px-3 py-2 text-sm text-gray-500">
+              Tidak ada hasil yang ditemukan untuk "${searchValue}"
             </div>
-          `;
-          $(elements.activeFiltersContainer).append(searchLabelHtml);
-          
-          // Create badge for each filter group
-          Object.values(searchState.groupedFilters).forEach((filter) => {
-            if (filter.values.length > 0) {
-              // Create badge with all values
-              const badgeHtml = `
-                <div class="filter-tag inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs ml-2">
-                  <span class="font-medium mr-1">${filter.title}:</span>
-                  <div class="flex flex-wrap items-center">
-                    ${filter.values
-                      .map(
-                        (value, index) => `
-                      <div class="flex items-center mr-1 last:mr-0">
-                        <span>${value}</span>
-                        <button class="remove-filter ml-1 text-blue-800 hover:text-blue-600"
-                               data-field="${filter.field}"
-                               data-value="${value}">
-                          <i class="ti ti-circle-x"></i>
-                        </button>
-                        ${index < filter.values.length - 1 ? '<span class="mx-1">|</span>' : ''}
-                      </div>
-                    `
-                      )
-                      .join('')}
-                  </div>
-                </div>
-              `;
-      
-              $(elements.activeFiltersContainer).append(badgeHtml);
-            }
-          });
+          `);
+          $(elements.searchSuggestions).removeClass('hidden');
+          positionSuggestions();
         }
       }
-      
-      /**
-       * Apply all active filters
-       */
-      function applyFilters() {
-        const searchState = AppUtils.TableUtils.searchState;
+  
+      // Handle search suggestion clicks
+      $(document).on('click', '.suggestion-item', function () {
+        const field = $(this).data('field');
+        const value = $(this).data('value');
+        const title = $(this).data('title');
+  
+        AppUtils.TableUtils.search.addFilterTag(field, value, title);
+        updateFilterBadges();
+        applyFilters();
         
-        // Reset table to show all rows first
-        table.clearFilter();
-      
-        // If no filters, reset everything
+        $(elements.searchInput).val('').focus();
+        $(elements.searchSuggestions).addClass('hidden');
+      });
+  
+      // Handle filter tag remove button clicks
+      $(document).on('click', '.remove-filter', function () {
+        const field = $(this).data('field');
+        const value = $(this).data('value');
+  
+        AppUtils.TableUtils.search.removeFilterValue(field, value);
+        updateFilterBadges();
+        applyFilters();
+        
+        // Check if no filters remain - if so, do a complete reset
+        const searchState = AppUtils.TableUtils.searchState;
         if (Object.keys(searchState.groupedFilters).length === 0) {
           AppUtils.TableUtils.resetTableCompletely();
-          return;
         }
-      
-        // Custom filter function
-        function customFilter(data) {
-          // Check if current row or any of its children match the filters
-          function checkRowAndChildren(rowData) {
-            // Check if current row matches all filter conditions
-            const directMatch = Object.keys(searchState.groupedFilters).every((field) => {
-              const values = searchState.groupedFilters[field].values;
-              return values.some(
-                (value) =>
-                  rowData[field] &&
-                  typeof rowData[field] === 'string' &&
-                  rowData[field].toLowerCase().includes(value.toLowerCase())
-              );
-            });
-      
-            if (directMatch) return true;
-      
-            // Check nested children
-            if (rowData._children && rowData._children.length) {
-              return rowData._children.some((child) => {
-                // Recursively check each child
-                return checkRowAndChildren(child);
-              });
-            }
-      
-            return false;
-          }
-      
-          return checkRowAndChildren(data);
-        }
-      
-        // Apply the custom filter
-        table.setFilter(customFilter);
-      
-        // Force a refresh to ensure highlighting updates on all visible cells
-        table.redraw(true);
-      
-        // Expand matching rows
-        AppUtils.TableUtils.expandMatchingNodes();
-      }
-      
-      /**
-       * Reset table completely
-       */
-      AppUtils.TableUtils.resetTableCompletely = function() {
-        const searchState = AppUtils.TableUtils.searchState;
-        
-        // Clear the search input
-        $(elements.searchInput).val('');
-        
-        // Hide the clear search button
-        $(elements.clearSearchBtn).addClass('hidden');
-        
-        // Clear all filters
-        searchState.groupedFilters = {};
-        
-        // Empty the active filters container
-        $(elements.activeFiltersContainer).empty();
-        
-        // Clear table filter
-        table.clearFilter();
-        
-        // Force a complete redraw to remove all highlighting
-        table.redraw(true);
-        
-        // Collapse all tree nodes
-        table.getRows().forEach((row) => {
-          if (row.getTreeChildren().length) {
-            row.treeCollapse();
-          }
-        });
-      };
-      
-      /**
-       * Expand nodes that match the current filters
-       */
-      AppUtils.TableUtils.expandMatchingNodes = function() {
-        const searchState = AppUtils.TableUtils.searchState;
-        
-        // First collapse all
-        table.getRows().forEach((row) => {
-          if (row.getTreeChildren().length) {
-            row.treeCollapse();
-          }
-        });
+      });
   
-        // Then expand ones with matching children
-        if (Object.keys(searchState.groupedFilters).length > 0) {
-          table.getRows().forEach((row) => {
-            const hasMatchingChild = row
-              .getTreeChildren()
-              .some((child) => AppUtils.TableUtils.search.rowMatchesFilter(child, searchState.groupedFilters));
+      // Add handler for the Clear All button
+      $(document).on('click', '#clear-all-filters', function() {
+        AppUtils.TableUtils.resetTableCompletely();
+      });
   
-            if (hasMatchingChild) {
-              row.treeExpand();
-              AppUtils.TableUtils.expandChildrenWithMatches(row);
-            }
-          });
-        }
-      };
-      
-      /**
-       * Recursively expand children that have matches
-       * @param {RowComponent} parentRow - The parent table row
-       */
-      AppUtils.TableUtils.expandChildrenWithMatches = function(parentRow) {
-        const searchState = AppUtils.TableUtils.searchState;
-        
-        parentRow.getTreeChildren().forEach((childRow) => {
-          const hasMatchingChild = childRow
-            .getTreeChildren()
-            .some((child) => AppUtils.TableUtils.search.rowMatchesFilter(child, searchState.groupedFilters));
-  
-          if (hasMatchingChild) {
-            childRow.treeExpand();
-            AppUtils.TableUtils.expandChildrenWithMatches(childRow);
-          }
-        });
-      };
-      
-      /**
-       * Set up event listeners
-       */
-      function setupEventListeners() {
-        // Handle input events
-        $(elements.searchInput).on(
-          'input',
-          AppUtils.TableUtils.debounce(function () {
-            const value = $(this).val();
-            AppUtils.TableUtils.searchState.currentSearchTerm = value;
-  
-            if (value) {
-              showSuggestions(value);
-              $(elements.clearSearchBtn).removeClass('hidden');
-  
-              // Force refresh of table cells to update highlighting for the current search term
-              table.redraw(true);
-            } else {
-              $(elements.searchSuggestions).addClass('hidden');
-              $(elements.clearSearchBtn).addClass('hidden');
-              table.redraw(true); // Refresh when cleared too
-            }
-          }, 300)
-        );
-  
-        // Handle search suggestion clicks
-        $(document).on('click', '.suggestion-item', function () {
-          const field = $(this).data('field');
-          const value = $(this).data('value');
-          const title = $(this).data('title');
-  
-          AppUtils.TableUtils.search.addFilterTag(field, value, title);
-          updateFilterBadges();
-          applyFilters();
-          
-          $(elements.searchInput).val('').focus();
+      // Hide suggestions when clicking outside
+      $(document).on('click', function (e) {
+        if (!$(e.target).closest('#search-suggestions, #global-search-input').length) {
           $(elements.searchSuggestions).addClass('hidden');
-        });
-  
-        // Handle filter tag remove button clicks
-        $(document).on('click', '.remove-filter', function () {
-          const field = $(this).data('field');
-          const value = $(this).data('value');
-  
-          AppUtils.TableUtils.search.removeFilterValue(field, value);
-          updateFilterBadges();
-          applyFilters();
-          
-          // Force a complete redraw to refresh all highlighting
-          table.redraw(true);
-          
-          // Check if no filters remain - if so, do a complete reset like clear search button
-          const searchState = AppUtils.TableUtils.searchState;
-          if (Object.keys(searchState.groupedFilters).length === 0) {
-            AppUtils.TableUtils.resetTableCompletely();
-          }
-        });
-  
-        // Add handler for the Clear All button
-        $(document).on('click', '#clear-all-filters', function() {
-          AppUtils.TableUtils.resetTableCompletely();
-        });
-  
-        // Hide suggestions when clicking outside
-        $(document).on('click', function (e) {
-          if (!$(e.target).closest('#search-suggestions, #global-search-input').length) {
-            $(elements.searchSuggestions).addClass('hidden');
-          }
-        });
-  
-        // Clear all filters
-        $(elements.clearSearchBtn).on('click', function () {
-          AppUtils.TableUtils.resetTableCompletely();
-        });
-  
-        // Add window resize listener to reposition suggestions
-        $(window).on('resize', function () {
-          if ($(elements.searchSuggestions).is(':visible')) {
-            positionSuggestions();
-          }
-        });
-  
-        // Handle Escape key
-        $(elements.searchInput).on('keydown', function (e) {
-          if (e.key === 'Escape') {
-            if ($(elements.searchSuggestions).is(':visible')) {
-              $(elements.searchSuggestions).addClass('hidden');
-            } else {
-              // Clear input but keep filters
-              $(this).val('');
-            }
-          }
-        });
-  
-        // Focus search input with / key
-        $(document).on('keydown', function (e) {
-          if (e.key === '/' && document.activeElement !== elements.searchInput) {
-            e.preventDefault();
-            elements.searchInput.focus();
-          }
-        });
-  
-        // Add placeholder animation effect on focus
-        $(elements.searchInput).on('focus', function () {
-          this.placeholder = 'Ketik untuk mencari...';
-          $(this).addClass('ring-2 ring-blue-400 border-blue-400');
-        });
-  
-        $(elements.searchInput).on('blur', function () {
-          this.placeholder = 'Cari di semua kolom...';
-          $(this).removeClass('ring-2 ring-blue-400 border-blue-400');
-        });
-      }
-      
-      /**
-       * Initialize dropdown handling
-       */
-      function initializeDropdowns() {
-        function closeAllDropdowns() {
-          $('.dropdown-content').removeClass('show');
         }
+      });
   
-        $(document).on('click', '.action-btn', function (e) {
+      // Clear all filters
+      $(elements.clearSearchBtn).on('click', function () {
+        AppUtils.TableUtils.resetTableCompletely();
+      });
+  
+      // Add window resize listener to reposition suggestions
+      $(window).on('resize', function () {
+        if ($(elements.searchSuggestions).is(':visible')) {
+          positionSuggestions();
+        }
+      });
+  
+      // Handle Escape key
+      $(elements.searchInput).on('keydown', function (e) {
+        if (e.key === 'Escape') {
+          // Clear any pending search
+          clearTimeout(searchTimeout);
+          $('.search-typing-indicator').remove();
+          
+          if ($(elements.searchSuggestions).is(':visible')) {
+            $(elements.searchSuggestions).addClass('hidden');
+          } else {
+            // Clear input but keep filters
+            $(this).val('');
+            $(elements.clearSearchBtn).addClass('hidden');
+          }
+        }
+      });
+  
+      // Focus search input with / key
+      $(document).on('keydown', function (e) {
+        if (e.key === '/' && document.activeElement !== elements.searchInput) {
+          e.preventDefault();
+          elements.searchInput.focus();
+        }
+      });
+  
+      // Add placeholder animation effect on focus
+      $(elements.searchInput).on('focus', function () {
+        this.placeholder = `Tekan Enter atau ketik min. ${searchConfig.minCharacters} karakter`;
+        $(this).addClass('ring-2 ring-blue-400 border-blue-400');
+      });
+
+      $(elements.searchInput).on('blur', function () {
+        this.placeholder = 'Cari di semua kolom...';
+        $(this).removeClass('ring-2 ring-blue-400 border-blue-400');
+      });
+    }
+    
+    /**
+     * Initialize dropdown handling
+     */
+    function initializeDropdowns() {
+      function closeAllDropdowns() {
+        $('.dropdown-content').removeClass('show');
+      }
+
+      $(document).on('click', '.action-btn', function (e) {
+        e.stopPropagation();
+        closeAllDropdowns();
+
+        var dropdown = $(this).next('.dropdown-content');
+        dropdown.addClass('show');
+
+        // Set fixed positions for the dropdown
+        var dropdownClone = dropdown.clone(true);
+        var btnPos = $(this).offset();
+
+        $('body > .dropdown-content').remove();
+
+        dropdown.removeClass('show');
+
+        dropdownClone
+          .css({
+            position: 'fixed',
+            top: btnPos.top + $(this).outerHeight(),
+            left: btnPos.left - $(this).outerWidth() * 7,
+            zIndex: 9999,
+          })
+          .appendTo('body')
+          .addClass('show');
+
+        dropdownClone.find('a').on('click', function (e) {
           e.stopPropagation();
           closeAllDropdowns();
-  
-          var dropdown = $(this).next('.dropdown-content');
-          dropdown.addClass('show');
-  
-          // Set fixed positions for the dropdown
-          var dropdownClone = dropdown.clone(true);
-          var btnPos = $(this).offset();
-  
-          $('body > .dropdown-content').remove();
-  
-          dropdown.removeClass('show');
-  
-          dropdownClone
-            .css({
-              position: 'fixed',
-              top: btnPos.top + $(this).outerHeight(),
-              left: btnPos.left - $(this).outerWidth() * 7,
-              zIndex: 9999,
-            })
-            .appendTo('body')
-            .addClass('show');
-  
-          dropdownClone.find('a').on('click', function (e) {
-            e.stopPropagation();
-            closeAllDropdowns();
-          });
         });
-  
-        $(document).on('click', function () {
-          closeAllDropdowns();
-        });
-      }
-      
-      /**
-       * Set up CSS styles for the table
-       */
-      function setupTableStyles() {
-        $('<style>')
-          .prop('type', 'text/css')
-          .html(
-            `
-            .dropdown-action { position: relative; display: inline-block; }
+      });
+
+      $(document).on('click', function () {
+        closeAllDropdowns();
+      });
+    }
+    
+    /**
+     * Set up CSS styles for the table
+     */
+    function setupTableStyles() {
+      $('<style>')
+        .prop('type', 'text/css')
+        .html(
+          `
+          .dropdown-action { position: relative; display: inline-block; }
             .action-btn { background: none; border: none; cursor: pointer; color: #6b7280; padding: 3px; }
             .action-btn:hover { color: #374151; }
             .dropdown-content { display: none; position: absolute; left: 0; background-color: #fff; min-width: 160px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); z-index: 9999; border-radius: 4px; overflow: hidden; font-size: 13px; }
@@ -866,7 +1102,102 @@ AppUtils.TableUtils = {
             .tabulator-header-filter {
               display: none;
             }
-          `
+
+            .search-typing-indicator, 
+            .search-loading-indicator, 
+            .search-error-indicator,
+            .search-min-chars-indicator {
+              border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+              font-weight: 500;
+            }
+
+            #search-suggestions {
+              max-height: 300px;
+              overflow-y: auto;
+              z-index: 1000;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              border-radius: 0.375rem;
+              border: 1px solid rgba(229, 231, 235, 1);
+              background-color: white;
+            }
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+            .animate-spin {
+              animation: spin 1s linear infinite;
+            }
+            /* Modern loading animation styles */
+            .table-loading-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background-color: rgba(255, 255, 255, 0.85);
+              display: none;
+              opacity: 0;
+              transition: opacity 0.3s ease;
+              z-index: 100;
+              justify-content: center;
+              align-items: center;
+              flex-direction: column;
+              backdrop-filter: blur(2px);
+            }
+
+            /* Pulse loading animation */
+            .loading-spinner {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 16px;
+            }
+
+            .loading-spinner .dot {
+              width: 12px;
+              height: 12px;
+              border-radius: 50%;
+              background-color: #3b82f6;
+              margin: 0 4px;
+              animation: pulse 1.5s infinite ease-in-out;
+            }
+
+            .loading-spinner .dot:nth-child(1) {
+              animation-delay: 0s;
+            }
+
+            .loading-spinner .dot:nth-child(2) {
+              animation-delay: 0.3s;
+            }
+
+            .loading-spinner .dot:nth-child(3) {
+              animation-delay: 0.6s;
+            }
+
+            .loading-message {
+              color: #334155;
+              font-size: 16px;
+              font-weight: 500;
+              letter-spacing: 0.025em;
+              text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+            }
+
+            @keyframes pulse {
+              0%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+              }
+              50% {
+                transform: scale(1.2);
+                opacity: 1;
+              }
+            }
+
+            /* For table container */
+            .tabulator {
+              position: relative;
+            }
+        `
         )
         .appendTo('head');
     }
@@ -876,8 +1207,6 @@ AppUtils.TableUtils = {
     setupEventListeners();
     initializeDropdowns();
     AppUtils.TableUtils.search.enhanceFilterInputs(tableSelector);
-    // always hide header filter on init tabulator-header-filter display: none;
-    
     
     // Return the initialized table object and related methods
     return {

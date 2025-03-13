@@ -2,6 +2,8 @@
 URL configuration for nusarp project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
+from purchase.urls import urlpatterns as purchase_urls
+urlpatterns += purchase_urls
 from authentication.urls import urlpatterns as authentication_urls
 urlpatterns += authentication_urls
 from warehouse.urls import urlpatterns as warehouse_urls
@@ -23,6 +25,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
+from debug_toolbar.toolbar import debug_toolbar_urls
 
 urlpatterns = [
     path('admin/clearcache/', include('clearcache.urls')),
@@ -30,4 +33,4 @@ urlpatterns = [
     # path("__reload__/", include("django_browser_reload.urls")),
     path('', include('authentication.urls')),
     path('api/', include('authentication.apis.urls')),
-]
+]+ debug_toolbar_urls()

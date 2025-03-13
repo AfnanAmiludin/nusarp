@@ -175,44 +175,44 @@
     }
 
     /* Style for column filters to match the main search design */
-.tabulator-header-filter input {
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  padding: 8px 10px 8px 36px; /* Add padding for the search icon */
-  font-size: 0.875rem;
-  width: 100%;
-  background-color: #f8fafc;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  height: 38px;
-}
+    .tabulator-header-filter input {
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px 8px 36px; /* Add padding for the search icon */
+      font-size: 0.875rem;
+      width: 100%;
+      background-color: #f8fafc;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      height: 38px;
+    }
 
-.tabulator-header-filter input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-  background-color: #fff;
-}
+    .tabulator-header-filter input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      background-color: #fff;
+    }
 
-/* Improved search icon styling to match main search */
-.tabulator-header-filter {
-  position: relative;
-}
+    /* Improved search icon styling to match main search */
+    .tabulator-header-filter {
+      position: relative;
+    }
 
-.tabulator-header-filter::before {
-  content: "";
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="rgb(100, 116, 139)"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>');
-  background-size: cover;
-  background-repeat: no-repeat;
-  z-index: 1;
-  opacity: 0.7;
-}
+    .tabulator-header-filter::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="rgb(100, 116, 139)"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>');
+      background-size: cover;
+      background-repeat: no-repeat;
+      z-index: 1;
+      opacity: 0.7;
+    }
 
     .tabulator {
       border: none;
@@ -403,8 +403,8 @@
     <!-- Search and Filters -->
     <div class="filters-row">
       <div class="search-container">
-        <input type="text" id="global-search-input" class="search-bar" placeholder="Cari...">
-        <button class="filter-icon" id="toggle-column-search">
+        <input type="text" autocomplete="off" id="global-search-input" class="search-bar" placeholder="Cari...">
+        <button class="filter-icon" id="toggle-group-column-search">
           <i class="ti ti-search"></i> Pencarian Kolom
         </button>
         <button class="filter-icon">
@@ -421,7 +421,7 @@
     <div class="table-section">
       
       <!-- Data Table -->
-      <div id="example-table" class="w-full"></div>
+      <div id="group-table" class="w-full"></div>
 
     <!-- Search Suggestions Dropdown (hidden initially) -->
     <div id="search-suggestions" class="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg hidden mt-1 w-64 max-h-60 overflow-auto"></div>
@@ -432,111 +432,127 @@
 {% block scripts %}
 <script>
   $(document).ready(function () {
-    // Sample nested data
-    const tableDataNested = [
-      { name: 'Oli Bob', location: 'United Kingdom', gender: 'male', col: 'red', dob: '14/04/1984', _children: [
-        { name: 'Mary May', location: 'Germany', gender: 'female', col: 'blue', dob: '14/05/1982' },
-        { name: 'Christine Lobowski', location: 'France', gender: 'female', col: 'green', dob: '22/05/1982' },
-      ]},
-      { name: 'Jamie Newhart', location: 'India', gender: 'male', col: 'green', dob: '14/05/1985' },
-      { name: 'Gemma Jane', location: 'China', gender: 'female', col: 'red', dob: '22/05/1982', _children: [
-        { name: 'Emily Sykes', location: 'South Korea', gender: 'female', col: 'maroon', dob: '11/11/1970' },
-      ]},
-      { name: 'James Newman', location: 'Japan', gender: 'male', col: 'red', dob: '22/03/1998' }
-    ];
-
-    // Enhanced column definitions with modern formatting
-    const columnDefs = [
+    // Function to fetch group data from API
+    function fetchGroupData(url) {
+      return $.ajax({
+        url: url || '/api/group',
+        method: 'GET',
+        dataType: 'json'
+      }).fail(function(xhr, status, error) {
+        console.error('Error fetching group data:', error);
+      });
+    }
+    
+    // Enhanced column definitions for group data
+    const groupColumnDefs = [
       { 
-        title: 'Name', 
-        field: 'name', 
-        minWidth: 150, 
+        title: 'Group ID',
+        field: 'group_id',
+        minWidth: 150,
+        headerFilter: true
+      },
+      { 
+        title: 'Group Name', 
+        field: 'group_name', 
+        minWidth: 500, 
         frozen: true, 
         formatter: TableUtils.formatters.highlightFormatter,
-        headerFilter: true, // Aktifkan kolom pencarian
+        headerFilter: true
       },
       { 
-        title: 'Location', 
-        field: 'location', 
-        minWidth: 100, 
-        formatter: TableUtils.formatters.highlightFormatter,
-        headerFilter: true, // Aktifkan kolom pencarian
-      },
-      { 
-        title: 'Gender', 
-        field: 'gender', 
-        minWidth: 80, 
-        formatter: TableUtils.formatters.highlightFormatter,
-        headerFilter: true, // Aktifkan kolom pencarian
-      },
-      { 
-        title: 'Favourite Color', 
-        field: 'col', 
+        title: 'Status', 
+        field: 'status', 
         minWidth: 100, 
         formatter: function(cell) {
           const value = cell.getValue();
+          let statusColor = 'gray';
+          if (value === 'active') statusColor = 'green';
+          else if (value === 'inactive') statusColor = 'red';
+          
           return `<div class="flex items-center">
-                    <span class="w-3 h-3 rounded-full mr-2" style="background-color:${value}"></span>
+                    <span class="w-3 h-3 rounded-full mr-2" style="background-color:${statusColor}"></span>
                     ${TableUtils.formatters.highlightFormatter(cell)}
                   </div>`;
         },
-        headerFilter: true, // Aktifkan kolom pencarian
+        headerFilter: true
       },
       { 
-        title: 'Date Of Birth', 
-        field: 'dob', 
+        title: 'Created Date', 
+        field: 'created', 
         hozAlign: 'center', 
-        sorter: 'date', 
-        minWidth: 100, 
-        formatter: TableUtils.formatters.highlightFormatter,
-        headerFilter: true, // Aktifkan kolom pencarian
+        sorter: 'datetime', 
+        minWidth: 180, 
+        formatter: function(cell) {
+          const value = cell.getValue();
+          if (!value) return "";
+          const date = new Date(value);
+          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        },
+        headerFilter: true
+      },
+      { 
+        title: 'Modified Date', 
+        field: 'modified', 
+        hozAlign: 'center', 
+        sorter: 'datetime', 
+        minWidth: 180, 
+        formatter: function(cell) {
+          const value = cell.getValue();
+          if (!value) return "";
+          const date = new Date(value);
+          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        },
+        headerFilter: true
       },
       { 
         field: 'actions', 
         formatter: TableUtils.formatters.actionsFormatter, 
-        width: 50, 
+        width: 80, 
         hozAlign: 'center', 
         headerSort: false, 
         cssClass: 'action-cell', 
         frozen: true, 
-        headerFilter: false, // Nonaktifkan kolom pencarian untuk kolom aksi
+        headerFilter: false
       }
     ];
-
-    // Initialize table with enhanced options
-    const tableOptions = {
+  
+    // Initialize table with group data
+    const groupTableOptions = {
       layout: "fitColumns",
       responsiveLayout: "collapse",
-      placeholder: "No Data Available",
-      pagination: "local",
+      placeholder: "No Group Data Available",
+      pagination: "remote", // Use server-side pagination
       paginationSize: 10,
-      paginationSizeSelector: [5, 10, 25, 50],
+      ajaxURL: "/api/group", // API endpoint for data and pagination
+      ajaxConfig: "GET",
+      ajaxParams: {}, // Additional parameters can be passed if needed
+      ajaxResponse: function(url, params, response) {
+        return {
+          data: response.results, // The array of data from the response
+          last_page: Math.ceil(response.count / params.size) // Calculate total pages
+        };
+      },
       movableColumns: true,
       initialSort: [
-        {column: "name", dir: "asc"}
-      ]
+        {column: "group_id", dir: "asc"}
+      ],
+      dataTree: true,
+      dataTreeChildField: "children",
+      dataTreeStartExpanded: false
     };
-
-    const tableManager = TableUtils.initializeSearchableTable('#example-table', tableDataNested, columnDefs, tableOptions);
-
-    // Fungsi untuk menampilkan/menyembunyikan kolom pencarian di header
-    $('#toggle-column-search').on('click', function() {
-      TableUtils.search.toggleColumnSearch('#example-table');
+  
+    // Initialize table
+    const tableManager = TableUtils.initializeSearchableTable(
+      '#group-table',
+      groupColumnDefs,
+      groupTableOptions  
+    );
+    
+    // Toggle column search
+    $('#toggle-group-column-search').on('click', function() {
+      TableUtils.search.toggleColumnSearch('#group-table');
     });
-
-    // Event handlers for action buttons
-    $(document).on('click', '.edit-btn', function(e) {
-      e.preventDefault();
-      const id = $(this).data('id');
-      console.log('Edit button clicked for ID:', id);
-    });
-
-    $(document).on('click', '.delete-btn', function(e) {
-      e.preventDefault();
-      const id = $(this).data('id');
-      console.log('Delete button clicked for ID:', id);
-    });
-
+  
     // Filter tag removal functionality
     $(document).on('click', '.filter-tag .close-btn', function() {
       $(this).parent().remove();
