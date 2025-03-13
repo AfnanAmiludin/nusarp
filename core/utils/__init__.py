@@ -4,6 +4,7 @@ from core.utils.search_filter_utils import SearchFilterMixin
 from core.utils.pagination import CustomPageNumberPagination
 from core.utils.prefetch_utils import PrefetchRelatedMixin
 from core.utils.base_viewset import SearchFilterViewSet
+from core.utils.redis_cache import RedisCacheMixin
 
 __all__ = [
     ShortUUID,
@@ -11,4 +12,5 @@ __all__ = [
     CustomPageNumberPagination,
     PrefetchRelatedMixin,
     SearchFilterViewSet,
+    RedisCacheMixin
 ]
