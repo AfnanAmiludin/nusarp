@@ -1,0 +1,51 @@
+{% load static %}
+{% load compress %}
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-nav-layout="vertical" class="light" data-header-styles="light" data-menu-styles="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> ERP NUSANTARA - {% block title %}{% endblock %}</title>
+    <meta name="description" content="ERP NUSANTARA - {% block description %}{% endblock %}">
+    <meta name="keywords" content="ERP NUSANTARA - {% block keywords %}{% endblock %}">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static '/assets/img/brand-logos/favicon.ico' %}">
+
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+    <!-- Style Css -->
+    <link rel="stylesheet" href="{% static '/assets/css/style.css' %}">
+    <style>
+        .selected-row {
+            background-color:rgba(242, 246, 249, 1) !important;
+            color: #000;
+            font-weight: bold;
+        }
+    </style>
+
+    <!-- Simplebar Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/simplebar/simplebar.min.css' %}">
+
+    <!-- Color Picker Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/@simonwep/pickr/themes/nano.min.css' %}">
+
+    <!-- Tabulator Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/tabulator-tables/css/tabulator.min.css' %}">
+
+    <!-- Choices Css -->
+    <link rel="stylesheet" href="{% static '/assets/libs/choices.js/public/assets/styles/choices.min.css' %}">
+
+</head>
+
+<body>
+
+    <script src="{%static 'assets/libs/tabulator-tables/js/tabulator.min.js'%}"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,111 @@
+{% extends "frame.html" %}
+
+{% block content %}
+    <div class="col-span-12">
+        <div class="box">
+            <div class="box-header flex justify-between items-center">
+                <button id="createButton" class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700">Create</button>
+                <button id="updateButton" class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700">Update</button>
+                <button id="permissionButton" class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700">Permission</button>
+                <h5 class="box-title text-center mx-auto">Basic DataTable</h5>
+            </div>
+            <div class="box-body">
+                <div class="overflow-auto table-bordered">
+                    <div id="basic-table" class="ti-custom-table ti-striped-table ti-custom-table-hover"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div id="modalContent" class="bg-white p-6 rounded-lg w-2/3 relative">
+            <button id="closeModal" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">
+                ✕
+            </button>
+            <h2 class="text-lg font-bold mb-4">Create New User</h2>
+            <form id="createUserForm" method="post">
+                {% csrf_token %}
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label for="user_id" class="block mb-2">User ID</label>
+                        <input type="text" id="user_id" name="user_id" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="user_name" class="block mb-2">Username</label>
+                        <input type="text" id="user_name" name="user_name" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="real_name" class="block mb-2">Real Name</label>
+                        <input type="text" id="real_name" name="real_name" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="email" class="block mb-2">Email</label>
+                        <input type="email" id="email" name="email" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="phone" class="block mb-2">Phone</label>
+                        <input type="text" id="phone" name="phone" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="password" class="block mb-2">Password</label>
+                        <input type="password" id="password" name="password" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div class="col-span-3">
+                        <label for="hs-small-switch" class="block mb-2">Is Active</label>
+                        <div class="flex items-center">
+                            <label class="text-sm text-gray-500 ltr:mr-3 rtl:ml-3 dark:text-white/70">True</label>
+                            <input type="checkbox" id="hs-small-switch" name="is_active" class="ti-switch shrink-0 w-11 h-6 before:w-5 before:h-5">
+                            <label class="text-sm text-gray-500 ltr:ml-3 rtl:mr-3 dark:text-white/70">False</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                        Save
+                    </button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+
+    <div id="updateModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div id="updateModalContent" class="bg-white p-6 rounded-lg w-2/3 relative">
+            <button id="closeUpdateModal" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">✕</button>
+            <h2 class="text-lg font-bold mb-4">Update User</h2>
+            <form id="updateForm">
+                {% csrf_token %}
+                <input type="hidden" id="update_user_id" name="user_id">
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label for="update_user_name" class="block mb-2">Username</label>
+                        <input type="text" id="update_user_name" name="user_name" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="update_real_name" class="block mb-2">Real Name</label>
+                        <input type="text" id="update_real_name" name="real_name" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="update_email" class="block mb-2">Email</label>
+                        <input type="email" id="update_email" name="email" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="update_phone" class="block mb-2">Phone</label>
+                        <input type="text" id="update_phone" name="phone" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="update_password" class="block mb-2">Password</label>
+                        <input type="password" id="update_password" name="password" class="w-full border p-2 rounded-lg">
+                    </div>
+                    <div class="col-span-3">
+                        <label for="update_is_active" class="block mb-2">Is Active</label>
+                        <input type="checkbox" id="update_is_active" name="is_active" class="ti-switch w-11 h-6">
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
