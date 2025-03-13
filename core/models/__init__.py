@@ -20,8 +20,16 @@ from core.models.sequence import (
     SequenceData,
     SequenceNumber,
 )
+from core.models.optimizations import (
+    PostgresOptimizer,
+    SchemaView,
+    Trigrams,
+    IndexOptimizer,
+    FullOptimizer,
+)
 
 __all__ = [
+    # Existing models
     Menu,
     MenuCategory,
     TimeStamped,
@@ -41,4 +49,11 @@ __all__ = [
     Sequence,
     SequenceData,
     SequenceNumber,
+    
+    # Optimization classes
+    PostgresOptimizer,
+    SchemaView,
+    Trigrams, 
+    IndexOptimizer,
+    FullOptimizer,
 ]

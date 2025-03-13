@@ -1,0 +1,57 @@
+{% load compress %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/libs/tabulator-tables/css/tabulator.min.css' %}">
+
+    {% block head %}{% endblock %}
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900">
+    
+    <!-- Main Content -->
+    <div id="main-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- External JS Libraries -->
+    <script src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'assets/libs/tabulator-tables/js/tabulator.min.js' %}"></script>
+    <script src="{% static 'assets/libs/luxon/js/luxon.min.js' %}"></script>
+
+    <!-- Utilities -->
+    <script src="{% static 'assets/utils/tabulator-utils.js' %}"></script>
+
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+    <script>
+        // Notify parent document about the title when the page has loaded (for iframe usage)
+        window.onload = function() {
+            if (window.parent && window.parent !== window) {
+                var pageTitle = document.title;
+                window.parent.postMessage({
+                    type: 'iframeTitle',
+                    title: pageTitle
+                }, '*');
+            }
+        };
+
+        // Alias for TableUtils
+        const TableUtils = AppUtils.TableUtils;
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
