@@ -1,1 +1,5 @@
-__all__ = []
+from master.apis.views.area import AreaViewSet
+
+__all__ = [
+    AreaViewSet
+]

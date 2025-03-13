@@ -34,5 +34,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path("__reload__/", include("django_browser_reload.urls")),
     path('', include('authentication.urls')),
+    path('', include('master.urls')),
     path('api/', include('authentication.apis.urls')),
 ]+ debug_toolbar_urls()

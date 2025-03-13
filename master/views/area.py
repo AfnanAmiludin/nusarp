@@ -4,9 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
-
-class UserView(LoginRequiredMixin, PermissionRequiredMixin, BaseView):
-    permission_required = 'authentication.view_user'
-    
+class AreaView(BaseView, LoginRequiredMixin, PermissionRequiredMixin):
+    permission_required = [
+        "view_area",
+    ]
     def get(self, request):
-        return render(request, 'user.html')
+        return render(request, 'area.html')

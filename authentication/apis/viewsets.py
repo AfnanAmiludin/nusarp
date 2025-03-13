@@ -76,6 +76,15 @@ class FormatViewSet(ModelViewSet):
             {"message": "Failed to update", "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
+        
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        cache.delete(self.cache_key)
+        return Response(
+            {"message": "Deleted successfully!"},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
     def _grouped_list(self, groups, queryset, request):
         require_group_count = request.query_params.get('requireGroupCount')
