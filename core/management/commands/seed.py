@@ -11,13 +11,17 @@ class Command(BaseCommand):
 
         seeders = []
 
-        # Cari semua aplikasi yang punya folder "seeders"
         for app in apps.get_app_configs():
             try:
                 seeder_module = import_module(f"{app.name}.seeders")
-                seeders.extend(seeder_module.SEEDERS)
+                if hasattr(seeder_module, 'SEEDERS'):
+                    seeders.extend(seeder_module.SEEDERS)
+                else:
+                    self.stdout.write(self.style.WARNING(f"⚠️ Modul seeder ditemukan di {app.name} tapi tidak memiliki SEEDERS."))
             except ModuleNotFoundError:
-                continue  # Lewati aplikasi yang tidak punya seeder
+                continue 
+            except AttributeError as e:
+                self.stdout.write(self.style.WARNING(f"⚠️ Error pada seeder {app.name}: {e}"))
 
         if not seeders:
             self.stdout.write(self.style.WARNING("⚠️ Tidak ada seeder yang ditemukan."))
