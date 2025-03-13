@@ -2,6 +2,8 @@
 URL configuration for nusarp project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
+from master.urls import urlpatterns as master_urls
+urlpatterns += master_urls
 from authentication.urls import urlpatterns as authentication_urls
 urlpatterns += authentication_urls
 from warehouse.urls import urlpatterns as warehouse_urls
