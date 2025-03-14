@@ -1,7 +1,7 @@
 import json
 import logging
 from urllib.parse import unquote
-from django.db.models import Q, Case, When, Value, IntegerField, F
+from django.db.models import Q, Case, When, Value, IntegerField, F, TextField, CharField, Sum, IntegerField, Value, Case, When, ExpressionWrapper, FloatField
 from django.db import connection
 from rest_framework.response import Response
 from rest_framework import status
@@ -98,28 +98,53 @@ class SearchFilterMixin:
         base_query = queryset.filter(is_removed=False)
         
         # For PostgreSQL with trigram indexes
+        # Inside the PostgreSQL trigram section where you calculate similarity
         if use_trigram and db_engine == 'postgresql':
             from django.contrib.postgres.search import TrigramSimilarity
+            from django.db.models import TextField, CharField, DateField, DateTimeField, IntegerField, FloatField, DecimalField
             
             # Calculate similarity for each field
             similarity_expressions = []
             for column in valid_columns:
-                weight = field_weights.get(column, 1.0)
-                similarity_expressions.append(
-                    TrigramSimilarity(column, search_query) * weight
-                )
+                # Get the field object from the model to check its type
+                try:
+                    field = model._meta.get_field(column)
+                    
+                    # Only apply trigram similarity to text-based fields
+                    if isinstance(field, (TextField, CharField)):
+                        weight = field_weights.get(column, 1.0)
+                        similarity_expressions.append(
+                            TrigramSimilarity(column, search_query) * weight
+                        )
+                    # Skip date, numeric, and other non-text fields
+                    else:
+                        logger.debug(f"Skipping non-text field for trigram search: {column} (type: {type(field).__name__})")
+                except Exception as e:
+                    logger.error(f"Error determining field type for {column}: {str(e)}")
+                    continue
             
-            # Use aggregated similarity score
+            # Use aggregated similarity score - only if we have valid expressions
             if similarity_expressions:
-                from django.db.models import Sum
+                from django.db.models import Sum, F, ExpressionWrapper, FloatField
                 
-                base_query = base_query.annotate(
-                    similarity=Sum(*similarity_expressions)
-                ).filter(similarity__gt=0.3).order_by('-similarity')
+                # If there's only one expression, use it directly
+                if len(similarity_expressions) == 1:
+                    combined_similarity = similarity_expressions[0]
+                else:
+                    # Combine multiple expressions with addition
+                    combined_similarity = reduce(lambda x, y: x + y, similarity_expressions)
                 
-                # Limit results
-                return base_query[:config.get('max_results', 50)]
+                # Annotate with combined similarity score
+                annotated_query = base_query.annotate(
+                    similarity=combined_similarity
+                ).filter(similarity__gt=0.3)
                 
+                # Apply ordering before slicing
+                ordered_query = annotated_query.order_by('-similarity')
+                
+                # Apply slice after ordering
+                return ordered_query[:config.get('max_results', 50)]
+        
         # For databases without trigram support or when not using trigram
         # Create exact match query
         exact_queries = []
@@ -135,8 +160,12 @@ class SearchFilterMixin:
                 # Get primary key field name
                 pk_field = model._meta.pk.name
                 
-                # Get exact match IDs
-                exact_ids = list(exact_matches.values_list(pk_field, flat=True)[:config.get('max_results', 20)])
+                # Get exact match IDs without slicing the queryset itself
+                exact_ids = list(exact_matches.values_list(pk_field, flat=True))
+                
+                # Limit the IDs in Python instead of slicing the queryset
+                max_exact = config.get('max_results', 20)
+                exact_ids = exact_ids[:max_exact]
                 
                 # Create partial match query
                 partial_queries = []
@@ -149,9 +178,12 @@ class SearchFilterMixin:
                     # Get partial matches excluding exact matches
                     partial_matches = base_query.filter(partial_q).exclude(exact_q)
                     
-                    # Limit partial results and get IDs
+                    # Get IDs without slicing the queryset
+                    partial_ids = list(partial_matches.values_list(pk_field, flat=True))
+                    
+                    # Limit the IDs in Python
                     remaining_slots = config.get('max_results', 50) - len(exact_ids)
-                    partial_ids = list(partial_matches.values_list(pk_field, flat=True)[:remaining_slots])
+                    partial_ids = partial_ids[:remaining_slots]
                     
                     # Combine IDs and ensure ordering
                     combined_ids = exact_ids + partial_ids
@@ -166,18 +198,17 @@ class SearchFilterMixin:
                         ordered_query = base_query.filter(**{f'{pk_field}__in': combined_ids})
                         
                         if when_clauses:
-                            ordered_query = ordered_query.annotate(
+                            return ordered_query.annotate(
                                 custom_order=Case(
                                     *when_clauses,
                                     default=Value(len(combined_ids)),
                                     output_field=IntegerField(),
                                 )
-                            ).order_by('custom_order')
-                        
-                        return ordered_query
+                            ).order_by('custom_order')[:config.get('max_results', 50)]
                 
                 # If no partial matches or processing failed, just return exact matches
-                return exact_matches
+                # Apply slice after ordering
+                return exact_matches.order_by('pk')[:config.get('max_results', 50)]
             
             # If not prioritizing exact matches or no exact matches, use partial matching
             partial_queries = []
@@ -186,10 +217,12 @@ class SearchFilterMixin:
                 
             if partial_queries:
                 partial_q = reduce(operator.or_, partial_queries)
-                return base_query.filter(partial_q)[:config.get('max_results', 50)]
+                # Apply slice after ordering
+                return base_query.filter(partial_q).order_by('pk')[:config.get('max_results', 50)]
             
             # Fall back to exact matches if no partial queries defined
-            return exact_matches[:config.get('max_results', 50)]
+            # Apply slice after ordering
+            return exact_matches.order_by('pk')[:config.get('max_results', 50)]
         
         # If no exact queries, use contains only
         contains_queries = []
@@ -198,11 +231,12 @@ class SearchFilterMixin:
             
         if contains_queries:
             contains_q = reduce(operator.or_, contains_queries)
-            return base_query.filter(contains_q)[:config.get('max_results', 50)]
-            
+            # Apply slice after ordering
+            return base_query.filter(contains_q).order_by('pk')[:config.get('max_results', 50)]
+        
         # If all else fails, return empty queryset
         return queryset.none()
-    
+
     def apply_filters(self, queryset, request):
         """
         Apply additional filters based on request parameters.
@@ -241,8 +275,13 @@ class SearchFilterMixin:
     def apply_sorting(self, queryset, request):
         """
         Apply sorting to the queryset based on request parameters.
-        Optimized for performance.
+        Optimized for performance and avoids reordering sliced querysets.
         """
+        # Check if the queryset has been sliced already
+        if hasattr(queryset, '_result_cache') and queryset._result_cache is not None:
+            # If queryset is already evaluated/sliced, return it as is
+            return queryset
+            
         sort_field = request.query_params.get('sort', None)
         model = queryset.model
         

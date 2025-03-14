@@ -28,6 +28,12 @@ class Group(Base):
         verbose_name=_('parent'),
         help_text=_('Used for hierarchy parent id'),
     )
+    group_hierarchy = models.CharField(
+        verbose_name=_('group hierarchy'),
+        help_text=_('Used for hierarchy group'),
+        blank=True,
+        null=True,
+    )
     status = models.CharField(
         default='draft',
         verbose_name=_('status'),
