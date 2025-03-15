@@ -455,9 +455,6 @@ AppUtils.TableUtils = {
       ajaxURL: options.ajaxURL || '', // Required: URL to fetch data
       ajaxParams: options.ajaxParams || {}, // Optional: Additional parameters
       ajaxConfig: options.ajaxConfig || 'POST', // HTTP method
-      ajaxFiltering: true, // Enable server-side filtering
-      ajaxSorting: true, // Enable server-side sorting
-      ajaxProgressiveLoad: options.ajaxProgressiveLoad || false, // Optional: Progressive loading
       
       // Pagination
       pagination: options.pagination !== undefined ? options.pagination : true,
@@ -473,14 +470,33 @@ AppUtils.TableUtils = {
     
     // Merge default options with provided options
     const tableOptions = {
-      ...defaultOptions, 
+      ...defaultOptions,
       columns: columnDefs,
-      ...options // Spread last to allow override of any previous settings
+      dataLoader: false,         // Nonaktifkan loader data bawaan
+      dataLoaderLoading: false,  // Nonaktifkan pesan loading data
+      ...options
     };
 
     // Create the table
-    AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Initializing table...');
     const table = new Tabulator(tableSelector, {...tableOptions});
+
+    // Tambahkan event listener untuk menggunakan custom overlay
+    table.on("dataLoading", function() {
+      AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Loading data...');
+    });
+
+    table.on("dataLoaded", function() {
+      AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+    });
+
+    // Juga tambahkan untuk ajax request jika menggunakan AJAX
+    table.on("ajaxStarted", function() {
+      AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Fetching data...');
+    });
+
+    table.on("ajaxComplete", function() {
+      AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+    });
 
     table.on("tableBuilt", function() {
       markNonSearchableColumns();

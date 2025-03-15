@@ -432,16 +432,6 @@
 {% block scripts %}
 <script>
   $(document).ready(function () {
-    // Function to fetch group data from API
-    function fetchGroupData(url) {
-      return $.ajax({
-        url: url || '/api/group',
-        method: 'GET',
-        dataType: 'json'
-      }).fail(function(xhr, status, error) {
-        console.error('Error fetching group data:', error);
-      });
-    }
     
     // Enhanced column definitions for group data
     const groupColumnDefs = [
