@@ -54,7 +54,7 @@ class Group(Base):
         ]
 
     def get_children(self):
-        return super(Groups, self).get_children().filter(
+        return super(Group, self).get_children().filter(
             parent=self,
             is_removed=False,
         )

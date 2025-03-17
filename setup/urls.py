@@ -36,4 +36,5 @@ urlpatterns = [
     path('', include('authentication.urls')),
     path('', include('master.urls')),
     path('api/', include('authentication.apis.urls')),
+    path('api/master/', include('master.apis.urls')),
 ]+ debug_toolbar_urls()

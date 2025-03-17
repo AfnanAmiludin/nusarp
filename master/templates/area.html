@@ -1,279 +1,507 @@
-{% load static %}
-{% load compress %}
+{% extends "base_frame.html" %}
+{% block title %}Data Pengguna{% endblock %}
 
-<!DOCTYPE html>
-<html lang="en" dir="ltr" data-nav-layout="vertical" class="light" data-header-styles="light" data-menu-styles="dark">
+{% block head %}
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #f3f4f6;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> ERP NUSANTARA - {% block title %}{% endblock %}</title>
-    <meta name="description" content="ERP NUSANTARA - {% block description %}{% endblock %}">
-    <meta name="keywords" content="ERP NUSANTARA - {% block keywords %}{% endblock %}">
+    /* Modern Card Styling */
+    .card {
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: var(--card-shadow);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="{% static '/assets/img/brand-logos/favicon.ico' %}">
+    /* Compact Header */
+    .header-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
 
-    <!-- Main JS -->
-    <script src="{% static 'assets/js/main.js' %}"></script>
+    .header-controls h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
 
-    <!-- Style Css -->
-    <link rel="stylesheet" href="{% static '/assets/css/style.css' %}">
-    <style>
-        .selected-row {
-            background-color:rgba(242, 246, 249, 1) !important;
-            color: #000;
-            font-weight: bold;
-        }
-    </style>
+    /* Minimalist Divider */
+    .divider {
+      border-top: 1px solid var(--border);
+      margin: 0.75rem 0;
+    }
 
-    <!-- Simplebar Css -->
-    <link rel="stylesheet" href="{% static '/assets/libs/simplebar/simplebar.min.css' %}">
+    /* Modern Button Styling */
+    .new-button {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      border: none;
+      transition: background-color 0.2s;
+    }
 
-    <!-- Color Picker Css -->
-    <link rel="stylesheet" href="{% static '/assets/libs/@simonwep/pickr/themes/nano.min.css' %}">
+    .new-button:hover {
+      background-color: var(--primary-hover);
+    }
 
-    <!-- Tabulator Css -->
-    <link rel="stylesheet" href="{% static '/assets/libs/tabulator-tables/css/tabulator.min.css' %}">
+    /* Compact and Efficient Search Section */
+    .filters-row {
+      display: flex;
+      justify-content: flex-end; /* Memindahkan ke kanan */
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    
+    .search-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-grow: 1;
+      max-width: 500px;
+      justify-content: flex-end; /* Memindahkan ke kanan */
+    }
 
-    <!-- Choices Css -->
-    <link rel="stylesheet" href="{% static '/assets/libs/choices.js/public/assets/styles/choices.min.css' %}">
+    .search-bar {
+      padding: 0.375rem 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border);
+      font-size: 0.875rem;
+      flex-grow: 1;
+      background-color: var(--secondary);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
 
-</head>
+    .search-bar:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
 
-<body>
+    .filter-icon {
+      background-color: var(--secondary);
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      border-radius: 0.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background-color 0.2s, color 0.2s;
+    }
 
-    <div class="col-span-12">
-        <div class="box">
-            <div class="box-header flex justify-between items-center">
-                <button id="createButton" class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700">Create</button>
-                <button id="updateButton" class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700">Update</button>
-                <button id="deleteButton" class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700">Delete</button>
-                <h5 class="box-title text-center mx-auto">Area</h5>
-            </div>
-            <div class="box-body">
-                <div class="overflow-auto table-bordered">
-                    <div id="list-area" class="ti-custom-table ti-striped-table ti-custom-table-hover"></div>
-                </div>
-            </div>
-        </div>
+    .filter-icon:hover {
+      background-color: #e5e7eb;
+      color: var(--text-primary);
+    }
+
+    /* Table Controls */
+    .table-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .table-info {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .density-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .density-btn {
+      background-color: var(--secondary);
+      border: 1px solid var(--border);
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .density-btn.active {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Modern and Compact Table */
+    .table-section {
+      margin-top: 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    
+    /* Tabulator Custom Styling */
+    .tabulator .tabulator-header .tabulator-col {
+      transition: height 0.3s ease;
+    }
+    
+    .tabulator:not(.filters-visible) .tabulator-header .tabulator-col {
+      height: auto !important;
+    }
+    
+    .tabulator.filters-visible .tabulator-header .tabulator-col {
+      height: auto !important;
+    }
+
+    /* Style for column filters to match the main search design */
+    .tabulator-header-filter input {
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px 8px 36px; /* Add padding for the search icon */
+      font-size: 0.875rem;
+      width: 100%;
+      background-color: #f8fafc;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      height: 38px;
+    }
+
+    .tabulator-header-filter input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      background-color: #fff;
+    }
+
+    /* Improved search icon styling to match main search */
+    .tabulator-header-filter {
+      position: relative;
+    }
+
+    .tabulator-header-filter::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="rgb(100, 116, 139)"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>');
+      background-size: cover;
+      background-repeat: no-repeat;
+      z-index: 1;
+      opacity: 0.7;
+    }
+
+    .tabulator {
+      border: none;
+      background-color: transparent;
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+    
+    /* CSS untuk header tabel */
+    .tabulator-header {
+      background-color: #f0f4f8 !important; /* Warna background yang berbeda */
+      border-bottom: 1px solid var(--border) !important;
+      padding: 0.25rem 0.2rem !important; /* Mengurangi padding untuk membuat header lebih kecil */
+    }
+    
+    .tabulator-header .tabulator-col {
+      background-color: transparent !important;
+      border-right: none !important;
+      padding: 0.25rem 0.2rem !important; /* Mengurangi padding untuk membuat header lebih kecil */
+      font-size: 0.875rem !important; /* Mengurangi ukuran font */
+      font-weight: 500 !important; /* Menambahkan ketebalan font */
+      color: var(--text-primary) !important; /* Warna teks */
+    }
+    
+    .tabulator-row {
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .tabulator-row.tabulator-row-even {
+      background-color: white;
+    }
+    
+    .tabulator-row.tabulator-row-odd {
+      background-color: var(--secondary);
+    }
+    
+    .tabulator-row:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .tabulator-row .tabulator-cell {
+      padding: 0.5rem;
+      border-right: none;
+    }
+
+    /* CSS untuk kolom pencarian di header */
+    .tabulator-col .tabulator-col-content .tabulator-col-filter {
+      display: none; /* Sembunyikan secara default */
+      margin-top: 0.25rem;
+    }
+
+    .tabulator-col .tabulator-col-content .tabulator-col-filter input {
+      width: 100%;
+      padding: 0.25rem;
+      border: 1px solid var(--border);
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      background-color: var(--secondary);
+    }
+
+    .tabulator-col .tabulator-col-content .tabulator-col-filter input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Active Filters Styling */
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .filter-tag {
+      background-color: var(--secondary);
+      color: var(--text-secondary);
+      border-radius: 1rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .filter-tag .close-btn {
+      cursor: pointer;
+    }
+
+    /* Action buttons */
+    .action-btn {
+      border: none;
+      background: transparent;
+      width: 1.5rem;
+      height: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .action-btn:hover {
+      background-color: var(--secondary);
+      color: var(--text-primary);
+    }
+    
+    .action-btn.edit-btn:hover {
+      color: var(--primary);
+    }
+    
+    .action-btn.delete-btn:hover {
+      color: #ef4444;
+    }
+
+    /* Pagination styling */
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+    }
+    
+    .pagination-controls {
+      display: flex;
+      gap: 0.25rem;
+    }
+    
+    .page-btn {
+      background-color: var(--secondary);
+      border: 1px solid var(--border);
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      transition: background-color 0.2s;
+    }
+    
+    .page-btn:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .page-btn.active {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+      .filters-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      
+      .search-container {
+        width: 100%;
+        max-width: none;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="px-4 py-3">
+  <!-- Main Card -->
+  <div class="card">
+    <!-- Title and Controls -->
+    <div class="header-controls">
+      <h2>Data Pengguna</h2>
+      <button class="new-button">
+        <i class="ti ti-plus text-xs"></i> Tambah Data
+      </button>
+    </div>
+    <div class="divider"></div>
+
+    <!-- Search and Filters -->
+    <div class="filters-row">
+      <div class="search-container">
+        <input type="text" autocomplete="off" id="global-search-input" class="search-bar" placeholder="Cari...">
+        <button class="filter-icon" id="toggle-group-column-search">
+          <i class="ti ti-search"></i> Pencarian Kolom
+        </button>
+        <button class="filter-icon">
+          <i class="ti ti-adjustments-horizontal"></i> Filter
+        </button>
+      </div>
     </div>
 
-    <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
-        <div id="modalContent" class="bg-white p-6 rounded-lg w-2/3 relative">
-            <button id="closeModal" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">
-                ✕
-            </button>
-            <h2 class="text-lg font-bold mb-4">Create New Area</h2>
-            <form id="createAreaForm" method="post">
-                {% csrf_token %}
-                <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label for="area_id" class="block mb-2">Area ID</label>
-                        <input type="text" id="area_id" name="area_id" class="w-full border p-2 rounded-lg">
-                    </div>
-                    <div>
-                        <label for="area_name" class="block mb-2">Areaname</label>
-                        <input type="text" id="area_name" name="area_name" class="w-full border p-2 rounded-lg">
-                    </div>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
-                        Save
-                    </button>
-                </div>
-            </form>
-            
-        </div>
+    <!-- Active Filters -->
+    <div id="active-filters" class="active-filters">
     </div>
 
-    <div id="updateModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
-        <div id="updateModalContent" class="bg-white p-6 rounded-lg w-2/3 relative">
-            <button id="closeUpdateModal" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">✕</button>
-            <h2 class="text-lg font-bold mb-4">Update Area</h2>
-            <form id="updateForm">
-                {% csrf_token %}
-                <input type="hidden" id="update_area_id" name="area_id">
-                <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label for="update_area_name" class="block mb-2">Areaname</label>
-                        <input type="text" id="update_area_name" name="area_name" class="w-full border p-2 rounded-lg">
-                    </div>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Update</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Table Section -->
+    <div class="table-section">
+      
+      <!-- Data Table -->
+      <div id="group-table" class="w-full"></div>
+
+    <!-- Search Suggestions Dropdown (hidden initially) -->
+    <div id="search-suggestions" class="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg hidden mt-1 w-64 max-h-60 overflow-auto"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
     
-
-    <script src="{%static 'assets/libs/tabulator-tables/js/tabulator.min.js'%}"></script>
-    <script>
-        let selectedRow = null;
-        //Create Button
-        const createButton = document.getElementById('createButton');
-        const createModal = document.getElementById('createModal');
-        const closeModal = document.getElementById('closeModal');
-        const modalContent = document.getElementById('modalContent');
-        //Update Button
-        const updateButton = document.getElementById('updateButton');
-        const updateModal = document.getElementById('updateModal');
-        const closeUpdateModal = document.getElementById('closeUpdateModal');
-        const updateForm = document.getElementById('updateForm');
-
-        // Modal Create
-        createButton.addEventListener('click', () => {
-            createModal.classList.remove('hidden');
-        });
-        closeModal.addEventListener('click', () => {
-            createModal.classList.add('hidden');
-        });
-
-        //Modal Update
-        updateButton.addEventListener('click', () => {
-            if (selectedRow && selectedRow.length == 1) {
-                document.getElementById('update_area_id').value = selectedRow[0].area_id;
-                document.getElementById('update_area_name').value = selectedRow[0].area_name;
-                updateModal.classList.remove('hidden');
-            } else if (selectedRow && selectedRow.length > 1){
-                alert('Jangan pilih lebih dari satu');
-            }else {
-                alert('Please select a row to update.');
-            }
-        });
-        closeUpdateModal.addEventListener('click', () => {
-            updateModal.classList.add('hidden');
-        });
-
-        //GET DATA FROM APIS BACKEND
-        $(document).ready(function () {
-            getArea()
-        });
-        function getArea(){
-            $.ajax({
-                url: '/api/master/area',
-                method: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    let table = new Tabulator("#list-area", {
-                        layout: "fitColumns",
-                        pagination: "local",
-                        paginationSize: 10,
-                        paginationSizeSelector: [5, 10, 15, 20, 25],
-                        paginationCounter: "rows",
-                        data: data,
-                        selectable: 1,
-                        columns: [
-                            { title: "Area ID", field: "area_id", sorter: "string" },
-                            { title: "Area Name", field: "area_name", sorter: "string" },
-                        ],
-                    });
-                    table.on("rowClick", function(e, row) {
-                        if (row.getElement().classList.contains('selected-row')) {
-                            row.getElement().classList.remove('selected-row');
-                        } else {
-                            table.getRows().forEach(r => r.getElement().classList.remove('selected-row'));
-                            row.getElement().classList.add('selected-row');
-                        }
-                    });
-                    table.on("rowSelectionChanged", function(data, rows){
-                        selectedRow = data
-                    });
-                },
-                error: function(xhr, status, error) {
-                }
-            });
-        }
-
-        //CREATE DATA USER
-        $('#createAreaForm').submit(function (e) {
-            e.preventDefault(); // Hindari reload halaman
+    // Enhanced column definitions for group data
+    const groupColumnDefs = [
+      { 
+        title: 'Area ID',
+        field: 'area_id',
+        minWidth: 150,
+        headerFilter: true
+      },
+      { 
+        title: 'Area Name', 
+        field: 'area_name', 
+        minWidth: 500, 
+        frozen: true, 
+        formatter: TableUtils.formatters.highlightFormatter,
+        headerFilter: true
+      },
+      { 
+        field: 'actions', 
+        formatter: TableUtils.formatters.actionsFormatter, 
+        width: 80, 
+        hozAlign: 'center', 
+        headerSort: false, 
+        cssClass: 'action-cell', 
+        frozen: true, 
+        headerFilter: false
+      }
+    ];
+  
+    // Initialize table with group data
+    const groupTableOptions = {
+      layout: "fitColumns",
+      responsiveLayout: "collapse",
+      placeholder: "No Group Data Available",
+      pagination: "remote", // Use server-side pagination
+      paginationSize: 10,
+      ajaxURL: "/api/master/area/", // API endpoint for data and pagination
+      ajaxConfig: "GET",
+      ajaxParams: {}, // Additional parameters can be passed if needed
+      ajaxResponse: function(url, params, response) {
+        return {
+          data: response.results, // The array of data from the response
+          last_page: Math.ceil(response.count / params.size) // Calculate total pages
+        };
+      },
+      movableColumns: true,
+      initialSort: [
+        {column: "area_id", dir: "asc"}
+      ],
+      dataTree: true,
+      dataTreeChildField: "children",
+      dataTreeStartExpanded: false
+    };
+  
+    // Initialize table
+    const tableManager = TableUtils.initializeSearchableTable(
+      '#group-table',
+      groupColumnDefs,
+      groupTableOptions  
+    );
     
-            const formData = {
-                area_id: $('#area_id').val(),
-                area_name: $('#area_name').val(),
-            };
-    
-            const csrfToken = $('[name=csrfmiddlewaretoken]').val();
-    
-            $.ajax({
-                type: 'POST',
-                url: '/api/master/area/',
-                headers: { 'X-CSRFToken': csrfToken },
-                data: formData,
-                success: function (response) {
-                    alert('Area created successfully!');
-                    $('#createModal').addClass('hidden'); // Tutup modal
-                    $('#createAreaForm')[0].reset(); // Reset form
-                    getArea()
-                },
-                error: function (xhr) {
-                    const errors = xhr.responseJSON.errors || {};
-                    let errorMessage = 'Failed to create area.\n';
-                    for (const field in errors) {
-                        errorMessage += `${field}: ${errors[field].join(', ')}\n`;
-                    }
-                    alert(errorMessage);
-                }
-            });
-        });
-
-        //UPDATE DATA USER
-        $('#updateForm').submit(function (e) {
-            e.preventDefault();
-        
-            const formData = new FormData(this);
-            const csrfToken = $('[name=csrfmiddlewaretoken]').val();
-        
-            $.ajax({
-                url: `/api/master/area/${$('#update_area_id').val()}/`, // Endpoint update user
-                method: 'PATCH', // atau 'PUT' tergantung kebutuhan
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                },
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (response) {
-                    alert('Area updated successfully!');
-                    $('#updateModal').addClass('hidden'); // Tutup modal
-                    $('#updateForm')[0].reset(); // Reset form
-                    getArea()
-                },
-                error: function (xhr) {
-                    const errors = xhr.responseJSON?.errors || 'Failed to update area';
-                    alert('Error: ' + JSON.stringify(errors));
-                }
-            });
-        });
-
-        //DELETE DATA AREA
-        $('#deleteButton').on('click', function (e) {
-            e.preventDefault();
-        
-            $.ajax({
-                url: `/api/master/area/${selectedRow[0].area_id}/`,
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
-                },
-                success: function (response) {
-                    alert('Data deleted successfully!');
-                    getArea();
-                },
-                error: function (xhr) {
-                    const errors = xhr.responseJSON?.errors || 'Failed to delete data';
-                    alert('Error: ' + JSON.stringify(errors));
-                    console.log('UASUU: ', errors);
-                }
-            });
-        });
-
-        
-    </script>
-
-</body>
-
-</html>
+    // Toggle column search
+    $('#toggle-group-column-search').on('click', function() {
+      TableUtils.search.toggleColumnSearch('#group-table');
+    });
+  
+    // Filter tag removal functionality
+    $(document).on('click', '.filter-tag .close-btn', function() {
+      $(this).parent().remove();
+    });
+  });
+</script>
+{% endblock %}
