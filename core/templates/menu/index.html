@@ -1,0 +1,782 @@
+{% load static %} {% load compress %}
+
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  data-nav-layout="vertical"
+  class="light"
+  data-header-styles="light"
+  data-menu-styles="dark"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ERP NUSANTARA - {% block title %}{% endblock %}</title>
+    <meta
+      name="description"
+      content="ERP NUSANTARA - {% block description %}{% endblock %}"
+    />
+    <meta
+      name="keywords"
+      content="ERP NUSANTARA - {% block keywords %}{% endblock %}"
+    />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Favicon -->
+    <link
+      rel="shortcut icon"
+      href="{% static '/assets/img/brand-logos/favicon.ico' %}"
+    />
+
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+    <!-- Style Css -->
+    <link rel="stylesheet" href="{% static '/assets/css/style.css' %}" />
+    <style>
+      .selected-row {
+        background-color: rgba(242, 246, 249, 1) !important;
+        color: #000;
+        font-weight: bold;
+      }
+    </style>
+
+    <!-- Simplebar Css -->
+    <link
+      rel="stylesheet"
+      href="{% static '/assets/libs/simplebar/simplebar.min.css' %}"
+    />
+
+    <!-- Color Picker Css -->
+    <link
+      rel="stylesheet"
+      href="{% static '/assets/libs/@simonwep/pickr/themes/nano.min.css' %}"
+    />
+
+    <!-- Tabulator Css -->
+    <link
+      rel="stylesheet"
+      href="{% static '/assets/libs/tabulator-tables/css/tabulator.min.css' %}"
+    />
+
+    <!-- Choices Css -->
+    <link
+      rel="stylesheet"
+      href="{% static '/assets/libs/choices.js/public/assets/styles/choices.min.css' %}"
+    />
+  </head>
+
+  <body>
+    <div class="col-span-12">
+      <div class="box">
+        <div class="box-header flex justify-between items-center">
+          <button
+            id="createButton"
+            class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Create
+          </button>
+          <button
+            id="updateButton"
+            class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Update
+          </button>
+          <button
+            id="permissionButton"
+            class="bg-blue-600 text-black px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Permission
+          </button>
+          <h5 class="box-title text-center mx-auto">Basic DataTable</h5>
+        </div>
+        <div class="box-body">
+          <div class="overflow-auto table-bordered">
+            <div
+              id="basic-table"
+              class="ti-custom-table ti-striped-table ti-custom-table-hover"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="createModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div id="modalContent" class="bg-white p-6 rounded-lg w-2/3 relative">
+        <button
+          id="closeModal"
+          class="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
+        >
+          ✕
+        </button>
+        <h2 class="text-lg font-bold mb-4">Create New User</h2>
+        <form id="createUserForm" method="post">
+          {% csrf_token %}
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label for="user_id" class="block mb-2">User ID</label>
+              <input
+                type="text"
+                id="user_id"
+                name="user_id"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="user_name" class="block mb-2">Username</label>
+              <input
+                type="text"
+                id="user_name"
+                name="user_name"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="real_name" class="block mb-2">Real Name</label>
+              <input
+                type="text"
+                id="real_name"
+                name="real_name"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="email" class="block mb-2">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="phone" class="block mb-2">Phone</label>
+              <input
+                type="text"
+                id="phone"
+                name="phone"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="password" class="block mb-2">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div class="col-span-3">
+              <label for="hs-small-switch" class="block mb-2">Is Active</label>
+              <div class="flex items-center">
+                <label
+                  class="text-sm text-gray-500 ltr:mr-3 rtl:ml-3 dark:text-white/70"
+                  >True</label
+                >
+                <input
+                  type="checkbox"
+                  id="hs-small-switch"
+                  name="is_active"
+                  class="ti-switch shrink-0 w-11 h-6 before:w-5 before:h-5"
+                />
+                <label
+                  class="text-sm text-gray-500 ltr:ml-3 rtl:mr-3 dark:text-white/70"
+                  >False</label
+                >
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end mt-4">
+            <button
+              type="submit"
+              class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      id="updateModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div
+        id="updateModalContent"
+        class="bg-white p-6 rounded-lg w-2/3 relative"
+      >
+        <button
+          id="closeUpdateModal"
+          class="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
+        >
+          ✕
+        </button>
+        <h2 class="text-lg font-bold mb-4">Update User</h2>
+        <form id="updateForm">
+          {% csrf_token %}
+          <input type="hidden" id="update_user_id" name="user_id" />
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label for="update_user_name" class="block mb-2">Username</label>
+              <input
+                type="text"
+                id="update_user_name"
+                name="user_name"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="update_real_name" class="block mb-2">Real Name</label>
+              <input
+                type="text"
+                id="update_real_name"
+                name="real_name"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="update_email" class="block mb-2">Email</label>
+              <input
+                type="email"
+                id="update_email"
+                name="email"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="update_phone" class="block mb-2">Phone</label>
+              <input
+                type="text"
+                id="update_phone"
+                name="phone"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div>
+              <label for="update_password" class="block mb-2">Password</label>
+              <input
+                type="password"
+                id="update_password"
+                name="password"
+                class="w-full border p-2 rounded-lg"
+              />
+            </div>
+            <div class="col-span-3">
+              <label for="update_is_active" class="block mb-2">Is Active</label>
+              <input
+                type="checkbox"
+                id="update_is_active"
+                name="is_active"
+                class="ti-switch w-11 h-6"
+              />
+            </div>
+          </div>
+          <div class="flex justify-end mt-4">
+            <button
+              type="submit"
+              class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+            >
+              Update
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      id="permissionModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+    >
+      <div
+        class="bg-white p-6 rounded-lg w-[90%] h-[90%] relative flex flex-col gap-4 overflow-auto"
+      >
+        <button
+          id="closePermissionModal"
+          class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 z-50"
+        >
+          ✕
+        </button>
+        <input type="hidden" id="permission_user_id" name="user_id" />
+        <h2 class="text-2xl font-bold text-center">Permission Tables</h2>
+        <div class="flex gap-4">
+          <div class="w-1/2">
+            <div class="box">
+              <div class="box-header py-2">
+                <button
+                  id="giveAccessButton"
+                  class="bg-blue-600 text-black px-2 py-1 text-sm rounded-md hover:bg-blue-700"
+                >
+                  Give Access
+                </button>
+                <button
+                  id="giveAccessAllButton"
+                  class="bg-blue-600 text-black px-2 py-1 text-sm rounded-md hover:bg-blue-700"
+                >
+                  Give Access All
+                </button>
+              </div>
+              <div class="box-body">
+                <div class="table-bordered rounded-sm ti-custom-table-head">
+                  <div
+                    id="givePermission"
+                    class="ti-custom-table ti-striped-table ti-custom-table-hover"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="w-1/2">
+            <div class="box">
+              <div class="box-header py-2">
+                <button
+                  id="takeBackAccessButton"
+                  class="bg-blue-600 text-black px-2 py-1 text-sm rounded-md hover:bg-blue-700"
+                >
+                  Take Back Access
+                </button>
+                <button
+                  id="takeBackAccessAllButton"
+                  class="bg-blue-600 text-black px-2 py-1 text-sm rounded-md hover:bg-blue-700"
+                >
+                  Take Back Access All
+                </button>
+              </div>
+              <div class="box-body">
+                <div class="table-bordered rounded-sm ti-custom-table-head">
+                  <div
+                    id="accessPermission"
+                    class="ti-custom-table ti-striped-table ti-custom-table-hover"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{%static 'assets/libs/tabulator-tables/js/tabulator.min.js'%}"></script>
+    <script>
+      let selectedRow = null;
+      //Create Button
+      const createButton = document.getElementById('createButton');
+      const createModal = document.getElementById('createModal');
+      const closeModal = document.getElementById('closeModal');
+      const modalContent = document.getElementById('modalContent');
+      //Update Button
+      const updateButton = document.getElementById('updateButton');
+      const updateModal = document.getElementById('updateModal');
+      const closeUpdateModal = document.getElementById('closeUpdateModal');
+      const updateForm = document.getElementById('updateForm');
+      //Permission Button
+      const permissionButton = document.getElementById('permissionButton');
+      const permissionModal = document.getElementById('permissionModal');
+      const closePermissionModal = document.getElementById(
+        'closePermissionModal'
+      );
+      const giveAccessButton = document.getElementById('giveAccessButton');
+      const giveAccessAllButton = document.getElementById(
+        'giveAccessAllButton'
+      );
+      const takeBackAccessButton = document.getElementById(
+        'takeBackAccessButton'
+      );
+      const takeBackAccessAllButton = document.getElementById(
+        'takeBackAccessAllButton'
+      );
+
+      // Modal Create
+      createButton.addEventListener('click', () => {
+        createModal.classList.remove('hidden');
+      });
+      closeModal.addEventListener('click', () => {
+        createModal.classList.add('hidden');
+      });
+
+      // Modal Permission
+      permissionButton.addEventListener('click', () => {
+        if (selectedRow && selectedRow.length == 1) {
+          document.getElementById('permission_user_id').value =
+            selectedRow[0].user_id;
+          notGrantedPermission();
+          grantedPermission();
+          permissionModal.classList.remove('hidden');
+        } else if (selectedRow && selectedRow.length > 1) {
+          alert('Jangan pilih lebih dari satu');
+        } else {
+          alert('Please select a row to update.');
+        }
+      });
+      closePermissionModal.addEventListener('click', () => {
+        permissionModal.classList.add('hidden');
+      });
+
+      //Modal Update
+      updateButton.addEventListener('click', () => {
+        if (selectedRow && selectedRow.length == 1) {
+          document.getElementById('update_user_id').value =
+            selectedRow[0].user_id;
+          document.getElementById('update_user_name').value =
+            selectedRow[0].user_name;
+          document.getElementById('update_real_name').value =
+            selectedRow[0].real_name;
+          document.getElementById('update_email').value = selectedRow[0].email;
+          document.getElementById('update_phone').value = selectedRow[0].phone;
+          updateModal.classList.remove('hidden');
+        } else if (selectedRow && selectedRow.length > 1) {
+          alert('Jangan pilih lebih dari satu');
+        } else {
+          alert('Please select a row to update.');
+        }
+      });
+      closeUpdateModal.addEventListener('click', () => {
+        updateModal.classList.add('hidden');
+      });
+
+      //GET DATA FROM APIS BACKEND
+      $(document).ready(function () {
+        getUsers();
+      });
+      function getUsers() {
+        $.ajax({
+          url: '/api/user/',
+          method: 'GET',
+          dataType: 'json',
+          success: function (data) {
+            let table = new Tabulator('#basic-table', {
+              layout: 'fitColumns',
+              pagination: 'local',
+              paginationSize: 10,
+              paginationSizeSelector: [5, 10, 15, 20, 25],
+              paginationCounter: 'rows',
+              data: data,
+              selectable: 1,
+              columns: [
+                { title: 'User ID', field: 'user_id', sorter: 'number' },
+                { title: 'Username', field: 'user_name', sorter: 'string' },
+                { title: 'Real Name', field: 'real_name', sorter: 'string' },
+                { title: 'Email', field: 'email', sorter: 'string' },
+                { title: 'Phone', field: 'phone', sorter: 'string' },
+              ],
+            });
+            table.on('rowClick', function (e, row) {
+              if (row.getElement().classList.contains('selected-row')) {
+                row.getElement().classList.remove('selected-row');
+              } else {
+                table
+                  .getRows()
+                  .forEach((r) =>
+                    r.getElement().classList.remove('selected-row')
+                  );
+                row.getElement().classList.add('selected-row');
+              }
+            });
+            table.on('rowSelectionChanged', function (data, rows) {
+              selectedRow = data;
+            });
+          },
+          error: function (xhr, status, error) {},
+        });
+      }
+
+      //CREATE DATA USER
+      $('#createUserForm').submit(function (e) {
+        e.preventDefault(); // Hindari reload halaman
+
+        const formData = {
+          user_id: $('#user_id').val(),
+          user_name: $('#user_name').val(),
+          real_name: $('#real_name').val(),
+          email: $('#email').val(),
+          phone: $('#phone').val(),
+          password: $('#password').val(),
+          is_active: $('#hs-small-switch').is(':checked'),
+        };
+
+        const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+
+        $.ajax({
+          type: 'POST',
+          url: '/api/user/',
+          headers: { 'X-CSRFToken': csrfToken },
+          data: formData,
+          success: function (response) {
+            alert('User created successfully!');
+            $('#createModal').addClass('hidden'); // Tutup modal
+            $('#createUserForm')[0].reset(); // Reset form
+            getUsers();
+          },
+          error: function (xhr) {
+            const errors = xhr.responseJSON.errors || {};
+            let errorMessage = 'Failed to create user.\n';
+            for (const field in errors) {
+              errorMessage += `${field}: ${errors[field].join(', ')}\n`;
+            }
+            alert(errorMessage);
+          },
+        });
+      });
+
+      $('#createUserForm').submit(function (e) {
+        e.preventDefault(); // Hindari reload halaman
+
+        const formData = {
+          user_id: $('#user_id').val(),
+          user_name: $('#user_name').val(),
+          real_name: $('#real_name').val(),
+          email: $('#email').val(),
+          phone: $('#phone').val(),
+          password: $('#password').val(),
+          is_active: $('#hs-small-switch').is(':checked'),
+        };
+
+        const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+
+        $.ajax({
+          type: 'POST',
+          url: '/api/user/',
+          headers: { 'X-CSRFToken': csrfToken },
+          data: formData,
+          success: function (response) {
+            alert('User created successfully!');
+            $('#createModal').addClass('hidden'); // Tutup modal
+            $('#createUserForm')[0].reset(); // Reset form
+            getUsers();
+          },
+          error: function (xhr) {
+            const errors = xhr.responseJSON.errors || {};
+            let errorMessage = 'Failed to create user.\n';
+            for (const field in errors) {
+              errorMessage += `${field}: ${errors[field].join(', ')}\n`;
+            }
+            alert(errorMessage);
+          },
+        });
+      });
+
+      //UPDATE DATA USER
+      $('#updateForm').submit(function (e) {
+        e.preventDefault();
+
+        const userId = $('#update_user_id').val(); // Mengambil user_id
+        const formData = new FormData(this);
+        const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+
+        $.ajax({
+          url: `/api/user/${userId}/`, // Endpoint update user
+          method: 'PATCH', // atau 'PUT' tergantung kebutuhan
+          headers: {
+            'X-CSRFToken': csrfToken,
+          },
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (response) {
+            alert('User updated successfully!');
+            $('#updateModal').addClass('hidden'); // Tutup modal
+            $('#updateForm')[0].reset(); // Reset form
+            getUsers();
+          },
+          error: function (xhr) {
+            const errors = xhr.responseJSON?.errors || 'Failed to update user';
+            alert('Error: ' + JSON.stringify(errors));
+          },
+        });
+      });
+
+      //GET DATA PERMISSION FROM APIS BACKEND
+      function notGrantedPermission() {
+        const userId = $('#permission_user_id').val(); // pastikan input ini ada di HTML
+        if (!userId) {
+          return;
+        }
+
+        $.ajax({
+          url: '/api/userpermission/notgranted?expand=content_type',
+          method: 'GET',
+          dataType: 'json',
+          data: {
+            current: JSON.stringify({ user_id: userId }),
+          },
+          success: function (data) {
+            let table = new Tabulator('#givePermission', {
+              layout: 'fitColumns',
+              pagination: 'local',
+              paginationSize: 10,
+              paginationSizeSelector: [5, 10, 15, 20, 25],
+              paginationCounter: 'rows',
+              data: data.data,
+              selectable: true,
+              columns: [
+                { title: 'Permission ID', field: 'codename', sorter: 'string' },
+                { title: 'Permission Name', field: 'name', sorter: 'string' },
+              ],
+            });
+            table.on('rowClick', function (e, row) {
+              row.getElement().classList.toggle('selected-row');
+            });
+            table.on('rowSelectionChanged', function (data, rows) {
+              selectedRow = data;
+            });
+          },
+          error: function (xhr, status, error) {},
+        });
+      }
+      function grantedPermission() {
+        const userId = $('#permission_user_id').val(); // pastikan input ini ada di HTML
+        if (!userId) {
+          return;
+        }
+
+        $.ajax({
+          url: '/api/userpermission/granted?expand=content_type',
+          method: 'GET',
+          dataType: 'json',
+          data: {
+            current: JSON.stringify({ user_id: userId }),
+          },
+          success: function (data) {
+            let table = new Tabulator('#accessPermission', {
+              layout: 'fitColumns',
+              pagination: 'local',
+              paginationSize: 10,
+              paginationSizeSelector: [5, 10, 15, 20, 25],
+              paginationCounter: 'rows',
+              data: data.data,
+              selectable: true,
+              columns: [
+                { title: 'Permission ID', field: 'codename', sorter: 'string' },
+                { title: 'Permission Name', field: 'name', sorter: 'string' },
+              ],
+            });
+            table.on('rowClick', function (e, row) {
+              row.getElement().classList.toggle('selected-row');
+            });
+            table.on('rowSelectionChanged', function (data, rows) {
+              selectedRow = data;
+            });
+          },
+          error: function (xhr, status, error) {},
+        });
+      }
+
+      $('#giveAccessButton').on('click', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+          url: '/api/userpermission/grant/',
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+          },
+          data: {
+            current: JSON.stringify({
+              user_id: $('#permission_user_id').val(),
+            }),
+            values: JSON.stringify(selectedRow),
+          }, // Ganti dengan formData atau data sesuai kebutuhan
+          success: function (response) {
+            alert('User updated successfully!');
+            grantedPermission();
+            notGrantedPermission();
+          },
+          error: function (xhr) {
+            const errors = xhr.responseJSON?.errors || 'Failed to update user';
+            alert('Error: ' + JSON.stringify(errors));
+          },
+        });
+      });
+
+      $('#giveAccessAllButton').on('click', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+          url: '/api/userpermission/grantall/',
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+          },
+          data: {
+            current: JSON.stringify({
+              user_id: $('#permission_user_id').val(),
+            }),
+            values: JSON.stringify(
+              Tabulator.findTable('#givePermission')[0].getData()
+            ),
+          }, // Ganti dengan formData atau data sesuai kebutuhan
+          success: function (response) {
+            alert('User updated successfully!');
+            grantedPermission();
+            notGrantedPermission();
+          },
+          error: function (xhr) {
+            const errors = xhr.responseJSON?.errors || 'Failed to update user';
+            alert('Error: ' + JSON.stringify(errors));
+          },
+        });
+      });
+
+      $('#takeBackAccessButton').on('click', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+          url: '/api/userpermission/revoke/',
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+          },
+          data: {
+            current: JSON.stringify({
+              user_id: $('#permission_user_id').val(),
+            }),
+            values: JSON.stringify(selectedRow),
+          }, // Ganti dengan formData atau data sesuai kebutuhan
+          success: function (response) {
+            alert('User updated successfully!');
+            grantedPermission();
+            notGrantedPermission();
+          },
+          error: function (xhr) {
+            const errors = xhr.responseJSON?.errors || 'Failed to update user';
+            alert('Error: ' + JSON.stringify(errors));
+          },
+        });
+      });
+
+      $('#takeBackAccessAllButton').on('click', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+          url: '/api/userpermission/revokeall/',
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+          },
+          data: {
+            current: JSON.stringify({
+              user_id: $('#permission_user_id').val(),
+            }),
+            values: JSON.stringify(
+              Tabulator.findTable('#accessPermission')[0].getData()
+            ),
+          }, // Ganti dengan formData atau data sesuai kebutuhan
+          success: function (response) {
+            alert('User updated successfully!');
+            grantedPermission();
+            notGrantedPermission();
+          },
+          error: function (xhr) {
+            const errors = xhr.responseJSON?.errors || 'Failed to update user';
+            alert('Error: ' + JSON.stringify(errors));
+          },
+        });
+      });
+    </script>
+  </body>
+</html>
