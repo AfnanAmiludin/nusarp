@@ -1,5 +1,5 @@
 {% extends "base_frame.html" %}
-{% block title %}Data Pengguna{% endblock %}
+{% block title %}Groups{% endblock %}
 
 {% block head %}
   <style>
@@ -393,7 +393,7 @@
   <div class="card">
     <!-- Title and Controls -->
     <div class="header-controls">
-      <h2>Data Pengguna</h2>
+      <h2>Groups</h2>
       <button class="new-button">
         <i class="ti ti-plus text-xs"></i> Tambah Data
       </button>
@@ -524,6 +524,10 @@
     });
   
     // Filter tag removal functionality
+    $(document).on('click', '.filter-tag .close-btn', function() {
+      $(this).parent().remove();
+    });
+
     $(document).on('click', '.filter-tag .close-btn', function() {
       $(this).parent().remove();
     });
