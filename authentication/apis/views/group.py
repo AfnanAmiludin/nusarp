@@ -36,7 +36,7 @@ class GroupViewSet(SearchFilterViewSet):
             "search_fields_weights": {
                 "group_id": 10,  # Primary identifier gets highest weight
                 "group_name": 5,  # Name is next most important
-                "status": 25,
+                "status": 5,
                 "group_hierarchy": 1,  # Description is least important for matching
             },
         }

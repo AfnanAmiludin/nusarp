@@ -70,6 +70,7 @@ MIDDLEWARE = [
     # "django_browser_reload.middleware.BrowserReloadMiddleware",
     "authentication.middleware.LoginRequiredMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = 'setup.urls'
@@ -90,6 +91,18 @@ TEMPLATES = [
         },
     },
 ]
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_MAX_AGE = 0
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 CACHES = {
     'default': {
