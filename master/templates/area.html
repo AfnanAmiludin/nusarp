@@ -388,120 +388,287 @@
 {% endblock %}
 
 {% block content %}
-<div class="px-4 py-3">
-  <!-- Main Card -->
-  <div class="card">
-    <!-- Title and Controls -->
-    <div class="header-controls">
-      <h2>Data Pengguna</h2>
-      <button class="new-button">
-        <i class="ti ti-plus text-xs"></i> Tambah Data
-      </button>
+    <div class="px-4 py-3">
+    <!-- Main Card -->
+    <div class="card">
+        <!-- Title and Controls -->
+        <div class="header-controls">
+            <h2>Data Pengguna</h2>
+            <div class="button-container">
+                <button id="createButton" class="new-button"><i class="ti ti-plus text-xs"></i> Tambah Data</button>
+                <button id="updateButton" class="new-button">Update</button>
+                <button id="deleteButton" class="new-button">Delete</button>
+            </div>
+        </div>
+        <div class="divider"></div>
+
+        <!-- Search and Filters -->
+        <div class="filters-row">
+        <div class="search-container">
+            <input type="text" autocomplete="off" id="global-search-input" class="search-bar" placeholder="Cari...">
+            <button class="filter-icon" id="toggle-group-column-search"><i class="ti ti-search"></i> Pencarian Kolom</button>
+            <button class="filter-icon"><i class="ti ti-adjustments-horizontal"></i> Filter </button>
+        </div>
+        </div>
+
+        <!-- Active Filters -->
+        <div id="active-filters" class="active-filters">
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-section">
+        
+        <!-- Data Table -->
+        <div id="group-table" class="w-full"></div>
+
+        <!-- Search Suggestions Dropdown (hidden initially) -->
+        <div id="search-suggestions" class="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg hidden mt-1 w-64 max-h-60 overflow-auto"></div>
+        
+        <!-- Create Modal -->
+        <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+            <div id="modalContent" class="bg-white p-6 rounded-lg w-2/3 relative">
+                <button id="closeModal" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">
+                    ✕
+                </button>
+                <h2 class="text-lg font-bold mb-4">Create New Area</h2>
+                <form id="createAreaForm" method="post">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label for="area_id" class="block mb-2">Area ID</label>
+                            <input type="text" id="area_id" name="area_id" class="w-full border p-2 rounded-lg">
+                        </div>
+                        <div>
+                            <label for="area_name" class="block mb-2">Areaname</label>
+                            <input type="text" id="area_name" name="area_name" class="w-full border p-2 rounded-lg">
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                            Save
+                        </button>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+
+        <!-- Update Modal -->
+        <div id="updateModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+            <div id="updateModalContent" class="bg-white p-6 rounded-lg w-2/3 relative">
+                <button id="closeUpdateModal" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">✕</button>
+                <h2 class="text-lg font-bold mb-4">Update Area</h2>
+                <form id="updateForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="update_area_id" name="area_id">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label for="update_area_name" class="block mb-2">Areaname</label>
+                            <input type="text" id="update_area_name" name="area_name" class="w-full border p-2 rounded-lg">
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="divider"></div>
-
-    <!-- Search and Filters -->
-    <div class="filters-row">
-      <div class="search-container">
-        <input type="text" autocomplete="off" id="global-search-input" class="search-bar" placeholder="Cari...">
-        <button class="filter-icon" id="toggle-group-column-search">
-          <i class="ti ti-search"></i> Pencarian Kolom
-        </button>
-        <button class="filter-icon">
-          <i class="ti ti-adjustments-horizontal"></i> Filter
-        </button>
-      </div>
     </div>
-
-    <!-- Active Filters -->
-    <div id="active-filters" class="active-filters">
-    </div>
-
-    <!-- Table Section -->
-    <div class="table-section">
-      
-      <!-- Data Table -->
-      <div id="group-table" class="w-full"></div>
-
-    <!-- Search Suggestions Dropdown (hidden initially) -->
-    <div id="search-suggestions" class="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg hidden mt-1 w-64 max-h-60 overflow-auto"></div>
-  </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  $(document).ready(function () {
-    
-    // Enhanced column definitions for group data
-    const groupColumnDefs = [
-      { 
-        title: 'Area ID',
-        field: 'area_id',
-        minWidth: 150,
-        headerFilter: true
-      },
-      { 
-        title: 'Area Name', 
-        field: 'area_name', 
-        minWidth: 500, 
-        frozen: true, 
-        formatter: TableUtils.formatters.highlightFormatter,
-        headerFilter: true
-      },
-      { 
-        field: 'actions', 
-        formatter: TableUtils.formatters.actionsFormatter, 
-        width: 80, 
-        hozAlign: 'center', 
-        headerSort: false, 
-        cssClass: 'action-cell', 
-        frozen: true, 
-        headerFilter: false
-      }
-    ];
-  
-    // Initialize table with group data
-    const groupTableOptions = {
-      layout: "fitColumns",
-      responsiveLayout: "collapse",
-      placeholder: "No Group Data Available",
-      pagination: "remote", // Use server-side pagination
-      paginationSize: 10,
-      ajaxURL: "/api/master/area/", // API endpoint for data and pagination
-      ajaxConfig: "GET",
-      ajaxParams: {}, // Additional parameters can be passed if needed
-      ajaxResponse: function(url, params, response) {
-        return {
-          data: response.results, // The array of data from the response
-          last_page: Math.ceil(response.count / params.size) // Calculate total pages
+    let selectedRow = null;
+    //Create Button
+    const createButton = document.getElementById('createButton');
+    const createModal = document.getElementById('createModal');
+    const closeModal = document.getElementById('closeModal');
+    const modalContent = document.getElementById('modalContent');
+    //Update Button
+    const updateButton = document.getElementById('updateButton');
+    const updateModal = document.getElementById('updateModal');
+    const closeUpdateModal = document.getElementById('closeUpdateModal');
+    const updateForm = document.getElementById('updateForm');
+
+    // Modal Create
+    createButton.addEventListener('click', () => {
+        createModal.classList.remove('hidden');
+    });
+    closeModal.addEventListener('click', () => {
+        createModal.classList.add('hidden');
+    });
+
+    //Modal Update
+    updateButton.addEventListener('click', () => {
+        if (selectedRow && selectedRow.length == 1) {
+            document.getElementById('update_area_id').value = selectedRow[0].area_id;
+            document.getElementById('update_area_name').value = selectedRow[0].area_name;
+            updateModal.classList.remove('hidden');
+        } else if (selectedRow && selectedRow.length > 1){
+            alert('Jangan pilih lebih dari satu');
+        }else {
+            alert('Please select a row to update.');
+        }
+    });
+    closeUpdateModal.addEventListener('click', () => {
+        updateModal.classList.add('hidden');
+    });
+
+    $(document).ready(function () {
+        // Enhanced column definitions for group data
+        const groupColumnDefs = [
+            { 
+                title: 'Area ID',
+                field: 'area_id',
+                minWidth: 150,
+                headerFilter: true
+            },
+            { 
+                title: 'Area Name', 
+                field: 'area_name', 
+                minWidth: 500, 
+                frozen: true, 
+                formatter: TableUtils.formatters.highlightFormatter,
+                headerFilter: true
+            },
+            { 
+                field: 'actions', 
+                formatter: TableUtils.formatters.actionsFormatter, 
+                width: 80, 
+                hozAlign: 'center', 
+                headerSort: false, 
+                cssClass: 'action-cell', 
+                frozen: true, 
+                headerFilter: false
+            }
+        ];
+
+        // Initialize table with group data
+        const groupTableOptions = {
+            layout: "fitColumns",
+            responsiveLayout: "collapse",
+            placeholder: "No Area Data Available",
+            pagination: "remote", // Use server-side pagination
+            paginationSize: 10,
+            ajaxURL: "/api/master/area", // API endpoint for data and pagination
+            ajaxConfig: "GET",
+            ajaxParams: {}, // Additional parameters can be passed if needed
+            ajaxResponse: function(url, params, response) {
+                return {
+                data: response.results, // The array of data from the response
+                last_page: Math.ceil(response.count / params.size) // Calculate total pages
+                };
+            },
+            movableColumns: true,
+            initialSort: [
+                {column: "area_id", dir: "asc"}
+            ],
+            dataTree: true,
+            dataTreeChildField: "children",
+            dataTreeStartExpanded: false
         };
-      },
-      movableColumns: true,
-      initialSort: [
-        {column: "area_id", dir: "asc"}
-      ],
-      dataTree: true,
-      dataTreeChildField: "children",
-      dataTreeStartExpanded: false
-    };
-  
-    // Initialize table
-    const tableManager = TableUtils.initializeSearchableTable(
-      '#group-table',
-      groupColumnDefs,
-      groupTableOptions  
-    );
+
+        // Initialize table
+        const tableManager = TableUtils.initializeSearchableTable(
+            '#group-table',
+            groupColumnDefs,
+            groupTableOptions  
+        );
+
+        // Toggle column search
+        $('#toggle-group-column-search').on('click', function() {
+            TableUtils.search.toggleColumnSearch('#group-table');
+        });
+
+        // Filter tag removal functionality
+        $(document).on('click', '.filter-tag .close-btn', function() {
+            $(this).parent().remove();
+        });
+    });
+
+    //CREATE DATA USER
+    $('#createAreaForm').submit(function (e) {
+        e.preventDefault(); // Hindari reload halaman
+
+        const formData = {
+            area_id: $('#area_id').val(),
+            area_name: $('#area_name').val(),
+        };
+
+        const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+
+        $.ajax({
+            type: 'POST',
+            url: '/api/master/area/',
+            headers: { 'X-CSRFToken': csrfToken },
+            data: formData,
+            success: function (response) {
+                alert('Area created successfully!');
+                $('#createModal').addClass('hidden'); // Tutup modal
+                $('#createAreaForm')[0].reset(); // Reset form
+                tableManager
+            },
+            error: function (xhr) {
+                const errors = xhr.responseJSON.errors || {};
+                let errorMessage = 'Failed to create area.\n';
+                for (const field in errors) {
+                    errorMessage += `${field}: ${errors[field].join(', ')}\n`;
+                }
+                alert(errorMessage);
+            }
+        });
+    });
+
+    //UPDATE DATA USER
+    $('#updateForm').submit(function (e) {
+        e.preventDefault();
     
-    // Toggle column search
-    $('#toggle-group-column-search').on('click', function() {
-      TableUtils.search.toggleColumnSearch('#group-table');
+        const formData = new FormData(this);
+        const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+    
+        $.ajax({
+            url: `/api/master/area/${$('#update_area_id').val()}/`, // Endpoint update user
+            method: 'PATCH', // atau 'PUT' tergantung kebutuhan
+            headers: {
+                'X-CSRFToken': csrfToken,
+            },
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                alert('Area updated successfully!');
+                $('#updateModal').addClass('hidden'); // Tutup modal
+                $('#updateForm')[0].reset(); // Reset form
+                tableManager
+            },
+            error: function (xhr) {
+                const errors = xhr.responseJSON?.errors || 'Failed to update area';
+                alert('Error: ' + JSON.stringify(errors));
+            }
+        });
     });
-  
-    // Filter tag removal functionality
-    $(document).on('click', '.filter-tag .close-btn', function() {
-      $(this).parent().remove();
+
+    //DELETE DATA AREA
+    $('#deleteButton').on('click', function (e) {
+        e.preventDefault();
+    
+        $.ajax({
+            url: `/api/master/area/${selectedRow[0].area_id}/`,
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+            },
+            success: function (response) {
+                alert('Data deleted successfully!');
+                tableManager
+            },
+            error: function (xhr) {
+                const errors = xhr.responseJSON?.errors || 'Failed to delete data';
+                alert('Error: ' + JSON.stringify(errors));
+                console.log('UASUU: ', errors);
+            }
+        });
     });
-  });
 </script>
 {% endblock %}
