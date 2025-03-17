@@ -18,6 +18,7 @@ class GroupSerializer(FlexFieldsModelSerializer):
         fields = [
             'group_id',
             'group_name',
+            'group_hierarchy',
             'parent',
             'status',
             'created',

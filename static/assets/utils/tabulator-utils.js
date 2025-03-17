@@ -195,30 +195,38 @@ AppUtils.TableUtils = {
           resolve([]);
           return;
         }
-    
-        // Gunakan AJAX untuk mengambil saran
+        
+        // Filter out columns with non-searchable types
+        const textOnlyColumns = searchableColumns.filter(col => {
+          // Define types that can be searched with text
+          const searchableTypes = ['text', 'string', 'varchar', 'char'];
+          // Check if column has a defined type and if it's searchable
+          return !col.dataType || searchableTypes.includes(col.dataType.toLowerCase());
+        });
+        
+        // Use AJAX to get suggestions
         $.ajax({
           url: ajaxConfig.suggestionUrl || ajaxConfig.ajaxURL,
           method: ajaxConfig.ajaxConfig || 'POST',
           data: {
             ...ajaxConfig.ajaxParams,
             search: searchValue,
-            columns: searchableColumns.map(col => col.field)
+            columns: textOnlyColumns.map(col => col.field)
           },
           success: function(response) {
             console.log(response.results);
     
-            // Menghasilkan array saran berdasarkan hasil response
+            // Generate suggestions array based on response results
             const suggestions = response.results.map(item => {
               let itemSuggestions = [];
     
-              // Iterasi setiap kolom yang dapat dicari
-              searchableColumns.forEach(column => {
+              // Iterate through each searchable column
+              textOnlyColumns.forEach(column => {
                 const field = column.field;
                 const title = column.title;
                 const value = item[field];
     
-                // Jika nilai ada, tipe data string, dan mengandung searchValue (case-insensitive)
+                // Only include if value exists, is a string, and contains searchValue (case-insensitive)
                 if (value && typeof value === 'string' && value.toLowerCase().includes(searchValue.toLowerCase())) {
                   itemSuggestions.push({
                     field,
@@ -228,23 +236,23 @@ AppUtils.TableUtils = {
                 }
               });
     
-              // Kembalikan item suggestions jika ada yang cocok
+              // Return item suggestions if any match
               return itemSuggestions;
             });
     
-            // Ratakan array of array menjadi satu array
+            // Flatten array of arrays into single array
             const results = suggestions.flat();
     
-            // Kirim hasil yang sudah dipetakan
+            // Send mapped results
             resolve(results);
           },
           error: function(xhr, status, error) {
             console.error('Search suggestions error:', error);
-            resolve([]);  // Kembalikan array kosong jika terjadi kesalahan
+            resolve([]);  // Return empty array if error occurs
           }
         });
       });
-    },    
+    },  
 
     /**
      * Check if a row matches filter via server-side logic
@@ -447,9 +455,6 @@ AppUtils.TableUtils = {
       ajaxURL: options.ajaxURL || '', // Required: URL to fetch data
       ajaxParams: options.ajaxParams || {}, // Optional: Additional parameters
       ajaxConfig: options.ajaxConfig || 'POST', // HTTP method
-      ajaxFiltering: true, // Enable server-side filtering
-      ajaxSorting: true, // Enable server-side sorting
-      ajaxProgressiveLoad: options.ajaxProgressiveLoad || false, // Optional: Progressive loading
       
       // Pagination
       pagination: options.pagination !== undefined ? options.pagination : true,
@@ -465,17 +470,57 @@ AppUtils.TableUtils = {
     
     // Merge default options with provided options
     const tableOptions = {
-      ...defaultOptions, 
+      ...defaultOptions,
       columns: columnDefs,
-      ...options // Spread last to allow override of any previous settings
+      dataLoader: false,         // Nonaktifkan loader data bawaan
+      dataLoaderLoading: false,  // Nonaktifkan pesan loading data
+      ...options
     };
 
     // Create the table
-    AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Initializing table...');
     const table = new Tabulator(tableSelector, {...tableOptions});
+
+    // Tambahkan event listener untuk menggunakan custom overlay
+    table.on("dataLoading", function() {
+      AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Loading data...');
+    });
+
+    table.on("dataLoaded", function() {
+      AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+    });
+
+    // Juga tambahkan untuk ajax request jika menggunakan AJAX
+    table.on("ajaxStarted", function() {
+      AppUtils.TableUtils.loadingOverlay.show(tableSelector, 'Fetching data...');
+    });
+
+    table.on("ajaxComplete", function() {
+      AppUtils.TableUtils.loadingOverlay.hide(tableSelector);
+    });
+
+    table.on("tableBuilt", function() {
+      markNonSearchableColumns();
+    });
     
-    // Define searchable columns - exclude actions
-    const searchableColumns = columnDefs.filter(col => col.field !== 'actions');
+    // Define searchable columns - exclude actions and add dataType info
+    const searchableColumns = columnDefs.filter(col => {
+      // Exclude actions column
+      if (col.field === 'actions') return false;
+      
+      // Exclude known non-text fields
+      const nonTextTypes = ['date', 'datetime', 'time', 'integer', 'float', 'numeric', 'boolean'];
+      if (col.dataType && nonTextTypes.includes(col.dataType.toLowerCase())) return false;
+      
+      return true;
+    });
+
+    // Add after the search input
+    const searchHelpIcon = `
+      <span class="search-help-icon ml-2 text-gray-400 cursor-help" title="Search applies to text columns only. Date, numeric, and action columns require filters.">
+        <i class="ti ti-info-circle"></i>
+      </span>
+    `;
+    $(elements.searchInput).after(searchHelpIcon);
     
     /**
      * Position the suggestions dropdown correctly
@@ -902,7 +947,12 @@ AppUtils.TableUtils = {
           // No results found
           $(elements.searchSuggestions).append(`
             <div class="px-3 py-2 text-sm text-gray-500">
-              Tidak ada hasil yang ditemukan untuk "${searchValue}"
+              <p>Tidak ada hasil yang ditemukan untuk "${searchValue}"</p>
+              <hr class="my-2 border-t border-gray-200">
+              <p class="text-xs text-gray-400 mt-1">
+                <i class="ti ti-info-circle mr-1"></i>
+                Pencarian hanya berlaku untuk kolom teks. Kolom tanggal, numerik, dan aksi memerlukan filter.
+              </p>
             </div>
           `);
           $(elements.searchSuggestions).removeClass('hidden');
@@ -1042,6 +1092,82 @@ AppUtils.TableUtils = {
 
       $(document).on('click', function () {
         closeAllDropdowns();
+      });
+    }
+
+    // Instead of adding after the input, let's place it inside with proper positioning
+    function enhanceGlobalSearch() {
+      const searchInput = $(elements.searchInput);
+      
+      // Add positioning to the search input container
+      searchInput.parent().css('position', 'relative');
+      
+      // Remove any existing help icons to prevent duplication
+      searchInput.parent().find('.search-help-icon').remove();
+      
+      // Create the search icon for the LEFT side
+      const searchIcon = $(`
+        <span class="search-icon text-gray-400" 
+              style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10; pointer-events: none;">
+          <i class="ti ti-search"></i>
+        </span>
+      `);
+      
+      // Create the help icon for the RIGHT side
+      const helpIcon = $(`
+        <span class="search-help-icon text-gray-400 cursor-help" 
+              title="Pencarian hanya berlaku untuk kolom teks. Kolom tanggal, numerik, dan aksi memerlukan filter."
+              style="position: absolute;right: 240px;top: 50%;transform: translateY(-50%);z-index: 10;">
+          <i class="ti ti-info-circle"></i>
+        </span>
+      `);
+      
+      // Insert both icons into the parent container
+      searchInput.parent().append(searchIcon);
+      searchInput.parent().append(helpIcon);
+      
+      // Adjust padding on both sides of the input to prevent text overlap with icons
+      searchInput.css({
+        'padding-left': '30px',  // Padding untuk ikon pencarian di kiri
+        'padding-right': '30px'  // Padding untuk ikon bantuan di kanan
+      });
+    }
+
+    function markNonSearchableColumns() {
+      // Define the non-searchable column types
+      const nonTextTypes = ['date', 'datetime', 'time', 'integer', 'float', 'numeric', 'boolean'];
+      
+      // Get all column definitions
+      const columns = table.getColumns();
+      
+      // Iterate through each column
+      columns.forEach(column => {
+        const columnDef = column.getDefinition();
+        const field = columnDef.field;
+        const dataType = columnDef.dataType;
+        
+        // Check if this is a non-searchable column
+        const isNonSearchable = field === 'actions' || 
+          (dataType && nonTextTypes.includes(dataType.toLowerCase()));
+        
+        if (isNonSearchable) {
+          // Get the header element for this column
+          const headerElement = column.getElement();
+          
+          if (headerElement) {
+            // Create a filter icon element
+            const filterIcon = document.createElement('span');
+            filterIcon.className = 'ml-1 text-xs text-gray-400';
+            filterIcon.innerHTML = '<i class="ti ti-filter"></i>';
+            filterIcon.title = 'Gunakan filter kolom (bukan pencarian global) untuk kolom ini';
+            
+            // Find the title element within the header
+            const titleElement = headerElement.querySelector('.tabulator-col-title');
+            if (titleElement) {
+              titleElement.appendChild(filterIcon);
+            }
+          }
+        }
       });
     }
     
@@ -1206,6 +1332,7 @@ AppUtils.TableUtils = {
     setupTableStyles();
     setupEventListeners();
     initializeDropdowns();
+    enhanceGlobalSearch();
     AppUtils.TableUtils.search.enhanceFilterInputs(tableSelector);
     
     // Return the initialized table object and related methods

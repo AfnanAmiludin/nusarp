@@ -1,5 +1,23 @@
 from authentication.models import Group
 
+def get_group_hierarchy(group):
+    """
+    Recursive function to build the group hierarchy.
+    Starts from the group and traverses up to the parent.
+    """
+    # Base case: if no parent, return just the current group name
+    if not group.parent_id:
+        return group.group_name
+    
+    # Get the parent group object
+    parent_group = Group.objects.filter(group_id=group.parent_id).first()
+    
+    # Recursively get the parent's hierarchy
+    parent_hierarchy = get_group_hierarchy(parent_group) if parent_group else ""
+    
+    # Combine the parent's hierarchy with the current group name
+    return f"{parent_hierarchy} > {group.group_name}"
+
 def seed():
     print("🔹 Menjalankan Group Seeder...")
 
@@ -112,6 +130,10 @@ def seed():
     Group.objects.create(group_id="97", group_name="Jabatan Staff", parent_id="32", status="active")
     Group.objects.create(group_id="98", group_name="Jabatan Direktur", parent_id="33", status="active")
     Group.objects.create(group_id="99", group_name="Jabatan Manager", parent_id="33", status="active")
+
+    for group in Group.objects.all():
+        group.group_hierarchy = get_group_hierarchy(group)
+        group.save()
 
     print("✅ Group Seeder selesai!")
 

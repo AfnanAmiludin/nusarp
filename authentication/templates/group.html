@@ -450,6 +450,14 @@
         headerFilter: true
       },
       { 
+        title: 'Group Hierarchy', 
+        field: 'group_hierarchy', 
+        minWidth: 500, 
+        frozen: true, 
+        formatter: TableUtils.formatters.highlightFormatter,
+        headerFilter: true
+      },
+      { 
         title: 'Status', 
         field: 'status', 
         minWidth: 100, 
@@ -463,34 +471,6 @@
                     <span class="w-3 h-3 rounded-full mr-2" style="background-color:${statusColor}"></span>
                     ${TableUtils.formatters.highlightFormatter(cell)}
                   </div>`;
-        },
-        headerFilter: true
-      },
-      { 
-        title: 'Created Date', 
-        field: 'created', 
-        hozAlign: 'center', 
-        sorter: 'datetime', 
-        minWidth: 180, 
-        formatter: function(cell) {
-          const value = cell.getValue();
-          if (!value) return "";
-          const date = new Date(value);
-          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-        },
-        headerFilter: true
-      },
-      { 
-        title: 'Modified Date', 
-        field: 'modified', 
-        hozAlign: 'center', 
-        sorter: 'datetime', 
-        minWidth: 180, 
-        formatter: function(cell) {
-          const value = cell.getValue();
-          if (!value) return "";
-          const date = new Date(value);
-          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         },
         headerFilter: true
       },

@@ -28,19 +28,26 @@ class SearchFilterViewSet(viewsets.ModelViewSet, SearchFilterMixin, PrefetchRela
         queryset = self.get_base_queryset()
         
         # Apply search
-        queryset = self.apply_search(queryset, request)
+        search_applied = False
+        if 'search' in request.query_params:
+            search_queryset = self.apply_search(queryset, request)
+            if search_queryset is not None:
+                queryset = search_queryset
+                search_applied = True
         
         # Apply filters
-        filtered_queryset = self.apply_filters(queryset, request)
-        if filtered_queryset is None:
-            return Response(
-                {"detail": "Invalid filter format"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        queryset = filtered_queryset
+        if not search_applied:  # Only apply filters if search wasn't applied
+            filtered_queryset = self.apply_filters(queryset, request)
+            if filtered_queryset is None:
+                return Response(
+                    {"detail": "Invalid filter format"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            queryset = filtered_queryset
         
-        # Apply sorting
-        queryset = self.apply_sorting(queryset, request)
+        # Apply sorting only if no search was applied
+        if not search_applied:
+            queryset = self.apply_sorting(queryset, request)
         
         # Add common select_related fields if defined
         if hasattr(self, 'select_related_fields') and self.select_related_fields:
