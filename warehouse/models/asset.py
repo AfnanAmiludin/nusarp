@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 from warehouse import settings
 
 from core.models import Base, History, Tracker, AdjacencyListTree
-from core.fields import StatusField
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +44,6 @@ class AssetSchema(
         verbose_name=_("parent"),
         help_text=_("Used for hierarchy parent id"),
     )
-    status = StatusField(
-        transition=False,
-    )
     tracker = Tracker()
     history = History(
         bases=[
@@ -84,11 +80,11 @@ class AssetSchema(
 class Asset(
     Base,
 ):
-    STATUS_CHOICES = {
-        AVAILABLE: _("Available"),
-        LOANED: _("Laned"),
-        SOLD: _("Sold"),
-    }
+    STATUS_CHOICES = [
+        ("AVAILABLE", _("Available")),
+        ("LOANED", _("Loaned")),
+        ("SOLD", _("Sold")),
+    ]
     asset_id = models.TextField(
         primary_key=True,
         verbose_name=_("asset id"),
@@ -155,12 +151,6 @@ class Asset(
         null=True,
         verbose_name=_("asset accumulative value"),
         help_text=_("used for asset accumulative value"),
-    )
-    asset_status = models.CharField(
-        choices=STATUS_CHOICES,
-        default=AVAILABLE,
-        verbose_name=_("asset status"),
-        help_text=_("used for asset status"),
     )
     open_balance_status = models.BooleanField(
         default=False,
@@ -257,24 +247,45 @@ class Asset(
         verbose_name=_("asset is product"),
         help_text=_("used for asset is product"),
     )
-    supplier = models.ForeignKey(
-        to="common.Supplier",
-        on_delete=models.PROTECT,
+    supplier = models.TextField(
+        default=None,
         blank=True,
         null=True,
-        related_name="%(app_label)s_%(class)s",
-        verbose_name=_("asset supplier id"),
-        help_text=_("used for asset supplier id"),
+        verbose_name=_("asset supplier"),
+        help_text=_("used for asset supplier"),
     )
-    cost_center = models.ForeignKey(
-        to="common.Department",
-        on_delete=models.PROTECT,
+    cost_center = models.TextField(
+        default=None,
         blank=True,
         null=True,
-        related_name="%(app_label)s_%(class)s",
-        verbose_name=_("asset department id"),
-        help_text=_("used for asset department id"),
+        verbose_name=_("asset cost center"),
+        help_text=_("used for asset cost center"),
     )
+    asset_status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default="AVAILABLE",
+        verbose_name=_("asset status"),
+        help_text=_("used for asset status"),
+    )
+    # supplier = models.ForeignKey(
+    #     to="common.Supplier",
+    #     on_delete=models.PROTECT,
+    #     blank=True,
+    #     null=True,
+    #     related_name="%(app_label)s_%(class)s",
+    #     verbose_name=_("asset supplier id"),
+    #     help_text=_("used for asset supplier id"),
+    # )
+    # cost_center = models.ForeignKey(
+    #     to="common.Department",
+    #     on_delete=models.PROTECT,
+    #     blank=True,
+    #     null=True,
+    #     related_name="%(app_label)s_%(class)s",
+    #     verbose_name=_("asset department id"),
+    #     help_text=_("used for asset department id"),
+    # )
     asset_schema = models.ForeignKey(
         to=AssetSchema,
         on_delete=models.RESTRICT,
@@ -283,9 +294,6 @@ class Asset(
         null=True,
         verbose_name=_("asset schema id"),
         help_text=_("Used for hierarchy asset schema id"),
-    )
-    status = StatusField(
-        transition=False,
     )
     tracker = Tracker()
     history = History(
@@ -306,7 +314,5 @@ class Asset(
         permissions = [
             ("add_asset_permission", _("Can add asset permission")),
             ("delete_asset_permission", _("Can delete asset permission")),
-            ("add_asset_group", _("Can add asset group")),
-            ("delete_asset_group", _("Can delete asset group")),
-            ("change_asset_password", _("Can change asset password")),
+            ("update_asset_permission", _("Can update asset permission")),
         ]
